@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.17 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.18 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -109,6 +109,12 @@ html[data-theme="light"] #sb .tab-item:hover{background:#f1f5f9}
 .tab-pane.active{display:block}
 
 /* KPI Cards */
+.mf-top{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start;margin-bottom:20px}
+.mf-top .panel{margin-bottom:0}
+.mf-top .kpi-2x2{grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
+.mf-top .kpi-card{padding:14px}
+.lme-panel td,.lme-panel th{padding:7px 10px;white-space:nowrap}
+@media (max-width:1100px){.mf-top{grid-template-columns:1fr}}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px}
 .kpi-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;position:relative;overflow:hidden}
 .kpi-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
@@ -265,7 +271,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 
 <div id="shell">
 <aside id="sb">
-  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.17</span><small>개인사업자 파이로</small></div></div>
+  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.18</span><small>개인사업자 파이로</small></div></div>
   <nav class="sb-nav" id="sbNav">
     <div class="sb-grp">고물상 · 비철</div>
     <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">🪙</span><span class="lb">비철 시세 관제</span></div>
@@ -305,7 +311,34 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 
   <!-- TAB 1: 고물상·비철 관제 (MF) 종합 & 금속 시세판 -->
   <div id="tab-mf" class="tab-pane active">
-    <div class="kpi-grid">
+    <div class="mf-top">
+    <!-- LME 비철 6종 (v1.10) -->
+    <div class="panel lme-panel">
+      <div class="panel-head">
+        <div class="panel-title">🌐 LME 비철 시세</div>
+        <div style="font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums" id="lmeMeta">-</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>품목</th>
+              <th style="text-align:right">원/kg</th>
+              <th style="text-align:right">전일대비</th>
+              <th style="text-align:right">등락률</th>
+              <th style="text-align:right">고가</th>
+              <th style="text-align:right">저가</th>
+              <th style="text-align:right">USD/t</th>
+              <th>시각</th>
+            </tr>
+          </thead>
+          <tbody id="lmeTableBody">
+            <tr><td colspan="8" style="text-align:center;padding:30px">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="kpi-grid kpi-2x2">
       <div class="kpi-card green">
         <div class="kpi-label">A동 (꽈베기) 최신 시세</div>
         <div class="kpi-val" id="kpiPriceAdong">18,000 원/kg</div>
@@ -327,50 +360,6 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         <div class="kpi-sub">MF매출 59건 전량 수금 (미수 0원)</div>
       </div>
     </div>
-
-    <!-- 세무 주의보 배너 (Claude 지침 반영) -->
-    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:16px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span style="font-size:20px">⚠️</span>
-        <h4 style="font-size:14px;font-weight:700;color:#fca5a5;margin:0">고물상(MF) 세무·특례 주의보 (조특법 제106조의9 & 부가세법 제108조)</h4>
-      </div>
-      <p style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:8px">
-        1. <b>구리·스크랩 매입자 납부특례 의무</b>: 동(구리), 황동(신주) 등 스크랩 사업자 간 거래 시 반드시 <b>스크랩 전용계좌</b>로 결제해야 부가세 매입세액이 인정됩니다.<br>
-        2. <b>개인 무증빙 매입 경비 부인 위험</b>: 세금계산서 없는 개인(수거처) 매입은 <b>신분증 사본·계좌이체증·매입대장</b>을 필수로 확보해야 종합소득세 필요경비로 인정받을 수 있습니다.
-      </p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px">
-        <span class="tag tag-tax-warn">구리(동): 매입자납부특례 [필수]</span>
-        <span class="tag tag-tax-warn">황동(신주): 매입자납부특례 [필수]</span>
-        <span class="tag tag-tax-ok">폐전선: 재활용폐자원 10/110 공제 [적용]</span>
-        <span class="tag tag-tax-ok">알루미늄(AL): 일반 과세 [적용]</span>
-      </div>
-    </div>
-
-    <!-- LME 비철 6종 (v1.10) -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title">🌐 LME 비철 시세</div>
-        <div style="font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums" id="lmeMeta">-</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>품목</th>
-              <th style="text-align:right">USD/t</th>
-              <th style="text-align:right">전일대비</th>
-              <th style="text-align:right">등락률</th>
-              <th style="text-align:right">고가</th>
-              <th style="text-align:right">저가</th>
-              <th style="text-align:right">원/kg</th>
-              <th>시세시각</th>
-            </tr>
-          </thead>
-          <tbody id="lmeTableBody">
-            <tr><td colspan="8" style="text-align:center;padding:30px">-</td></tr>
-          </tbody>
-        </table>
-      </div>
     </div>
 
     <!-- 오늘 시세판 전체 테이블 -->
@@ -399,6 +388,24 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         </table>
       </div>
     </div>
+    <!-- 세무 주의보 배너 (Claude 지침 반영) -->
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span style="font-size:20px">⚠️</span>
+        <h4 style="font-size:14px;font-weight:700;color:#fca5a5;margin:0">고물상(MF) 세무·특례 주의보 (조특법 제106조의9 & 부가세법 제108조)</h4>
+      </div>
+      <p style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:8px">
+        1. <b>구리·스크랩 매입자 납부특례 의무</b>: 동(구리), 황동(신주) 등 스크랩 사업자 간 거래 시 반드시 <b>스크랩 전용계좌</b>로 결제해야 부가세 매입세액이 인정됩니다.<br>
+        2. <b>개인 무증빙 매입 경비 부인 위험</b>: 세금계산서 없는 개인(수거처) 매입은 <b>신분증 사본·계좌이체증·매입대장</b>을 필수로 확보해야 종합소득세 필요경비로 인정받을 수 있습니다.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px">
+        <span class="tag tag-tax-warn">구리(동): 매입자납부특례 [필수]</span>
+        <span class="tag tag-tax-warn">황동(신주): 매입자납부특례 [필수]</span>
+        <span class="tag tag-tax-ok">폐전선: 재활용폐자원 10/110 공제 [적용]</span>
+        <span class="tag tag-tax-ok">알루미늄(AL): 일반 과세 [적용]</span>
+      </div>
+    </div>
+
   </div>
 
   <!-- TAB 2: 현장 매입 견적기 (67종 100% 일치 공식) -->
@@ -408,7 +415,6 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         <div class="panel-title">
           <span>🎯 현장 매입 견적 계산기 (실시간 규격 매입 상한가 산출)</span>
         </div>
-        <span class="badge">시트 67/67 일치 공식 검증 완비</span>
       </div>
       <div style="padding:20px">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:16px">
@@ -453,11 +459,12 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
       </div>
     </div>
 
-    <!-- 67종 매입 상한가 판단 기준표 -->
+    <!-- 규격별 매입 상한가 마스터 (pyro_mf_guide_master) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📋 67종 전선·비철 규격별 매입 상한가 마스터 (<span id="guideCount">0</span>종)</div>
+        <div class="panel-title">📋 전선·비철 규격별 매입 상한가 마스터 (<span id="guideCount">0</span>종)</div>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-xs" onclick="guideOpen(null)">+ 품목</button>
           <input type="text" id="guideSearch" class="input" placeholder="규격/분류/도체 검색..." onkeyup="filterGuide()" style="width:220px">
         </div>
       </div>
@@ -661,23 +668,23 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <div class="kpi-grid">
       <div class="kpi-card green">
         <div class="kpi-label">출자금 누적 (개인 ➡️ 사업)</div>
-        <div class="kpi-val" id="kpiInvestIn">34,350,000 원</div>
-        <div class="kpi-sub">총 11건 출자 전표</div>
+        <div class="kpi-val" id="kpiInvestIn">-</div>
+        <div class="kpi-sub" id="kpiInvestInSub"></div>
       </div>
       <div class="kpi-card amber">
         <div class="kpi-label">인출금 누적 (사업 ➡️ 개인)</div>
-        <div class="kpi-val" id="kpiDrawOut">47,271,431 원</div>
-        <div class="kpi-sub">총 20건 인출 전표</div>
+        <div class="kpi-val" id="kpiDrawOut">-</div>
+        <div class="kpi-sub" id="kpiDrawOutSub"></div>
       </div>
       <div class="kpi-card red">
-        <div class="kpi-label">순잔액 (초과인출 상태)</div>
-        <div class="kpi-val" id="kpiNetCum" style="color:var(--red)">-12,921,431 원</div>
-        <div class="kpi-sub" style="color:var(--red);font-weight:700">⚠️ 인출 초과 발생 중</div>
+        <div class="kpi-label">순잔액 (출자 − 인출)</div>
+        <div class="kpi-val" id="kpiNetCum">-</div>
+        <div class="kpi-sub" id="kpiNetCumSub" style="font-weight:700"></div>
       </div>
       <div class="kpi-card purple">
-        <div class="kpi-label">연간 지급이자 비용 (계정 9200)</div>
-        <div class="kpi-val" id="kpiInterestExp">29,273,036 원</div>
-        <div class="kpi-sub">총 11건 이자 전표 집계</div>
+        <div class="kpi-label">지급이자 누적 (계정 9200)</div>
+        <div class="kpi-val" id="kpiInterestExp">-</div>
+        <div class="kpi-sub" id="kpiInterestExpSub"></div>
       </div>
     </div>
 
@@ -688,8 +695,8 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         <h4 style="font-size:14px;font-weight:700;color:#fca5a5;margin:0">Tax-Risk Guard: 초과인출금 지급이자 필요경비 불산입 경고 (소득세법 시행령 제61조 제1항 제2호)</h4>
       </div>
       <p style="font-size:12.5px;color:#e2e8f0;line-height:1.6;margin-bottom:8px">
-        현재 파이로 사업주 계정은 <b>-12,921,431원의 초과인출</b> 상태입니다.<br>
-        개인사업자가 사업용 자산가액을 초과하여 자금을 인출한 상태에서 차입금 지급이자(2,927만 원)가 발생하면, 
+        현재 파이로 사업주 계정은 <b id="trgNet">-</b> 상태입니다.<br>
+        개인사업자가 사업용 자산가액을 초과하여 자금을 인출한 상태에서 차입금 지급이자(<span id="trgInt">-</span>)가 발생하면, 
         <b>초과인출금 적수 비율에 상당하는 지급이자는 종합소득세 신고 시 필요경비에 불산입</b>되어 세부담이 증가합니다.
       </p>
       <div style="font-size:11.5px;color:#94a3b8;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:6px">
@@ -697,36 +704,28 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
       </div>
     </div>
 
-    <!-- 사업부별 실적 KPI 요약 카드 -->
+    <!-- 사업부별 올해 실적 (pyro_div_pl 집계) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🏢 5대 사업부별 실적 구조 요약 (RE · MF · DS · CM · SV)</div>
+        <div class="panel-title">🏢 사업부별 실적 (<span id="divSumYr">-</span>년 누계)</div>
       </div>
-      <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
-        <div style="background:#0b1120;padding:14px;border-radius:8px;border-left:4px solid var(--blue)">
-          <div style="font-size:11px;color:var(--text-muted)">RE 부동산임대 (주력 이익원)</div>
-          <div style="font-size:16px;font-weight:700;color:#fff;margin-top:4px">2026년 매출 3,200만</div>
-          <div style="font-size:11.5px;color:var(--blue);margin-top:2px">영업이익 +3,200만 (이자 2,130만)</div>
-        </div>
-        <div style="background:#0b1120;padding:14px;border-radius:8px;border-left:4px solid var(--green)">
-          <div style="font-size:11px;color:var(--text-muted)">MF 제조·고물상 (신규 성장)</div>
-          <div style="font-size:16px;font-weight:700;color:#fff;margin-top:4px">2026년 매출 645만</div>
-          <div style="font-size:11.5px;color:var(--green);margin-top:2px">원가 333만 · 이익 +312만 (마진 48%)</div>
-        </div>
-        <div style="background:#0b1120;padding:14px;border-radius:8px;border-left:4px solid var(--amber)">
-          <div style="font-size:11px;color:var(--text-muted)">DS 도소매·공구온</div>
-          <div style="font-size:16px;font-weight:700;color:#fff;margin-top:4px">2026년 매출 0만</div>
-          <div style="font-size:11.5px;color:var(--amber);margin-top:2px">매입원가 119만 (재고 보유)</div>
-        </div>
-        <div style="background:#0b1120;padding:14px;border-radius:8px;border-left:4px solid var(--purple)">
-          <div style="font-size:11px;color:var(--text-muted)">CM 공통 판관비</div>
-          <div style="font-size:16px;font-weight:700;color:#fff;margin-top:4px">2026년 판관비 86만</div>
-          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">수선비·세금과공과 등</div>
-        </div>
+      <div id="divSummary" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px"></div>
+    </div>
+
+    <!-- 사업부 월 목표 (pyro_div_targets) -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">🎯 사업부 월 목표 대비 실적</div>
+        <button class="btn btn-primary btn-xs" onclick="divtOpen(null)">+ 목표</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>월</th><th>사업부</th><th style="text-align:right">목표 매출</th><th style="text-align:right">실적 매출</th><th style="text-align:right">달성률</th><th style="text-align:right">목표 영업이익</th><th style="text-align:right">실적 영업이익</th><th style="text-align:right">달성률</th><th>메모</th></tr></thead>
+          <tbody id="divtRows"><tr><td colspan="9" style="text-align:center;padding:30px">-</td></tr></tbody>
+        </table>
       </div>
     </div>
 
-    
     <!-- WO-25: 부가세 실원장 vs 시트 대조 및 매입세액 환급 분석 카드 -->
     <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:10px;padding:16px;margin-bottom:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
@@ -844,7 +843,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 월별 사업부 손익 집계표 (pyro_div_pl 직결) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📊 사업부×월 손익 집계 원장 (pyro_div_pl 24건)</div>
+        <div class="panel-title">📊 사업부×월 손익 집계 (<span id="divPlCount">0</span>건)</div>
         <div style="display:flex;gap:8px;align-items:center">
           <select id="plYrFilter" class="select" onchange="filterDivPl()">
             <option value="">연도 전체</option>
@@ -887,7 +886,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 사업주 인출/출자 거래 원장 (pyro_owner_account) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">👤 사업주 계정 거래 원장 (pyro_owner_account 31건)</div>
+        <div class="panel-title">👤 사업주 계정 거래 원장 (<span id="ownerCount">0</span>건)</div>
         <div style="font-size:11px;color:var(--text-muted)">개인 자금 입출금 내역 및 누적 잔액 추이</div>
       </div>
       <div class="table-wrap" style="max-height:450px;overflow-y:auto">
@@ -1254,24 +1253,27 @@ function renderLme(rows){
   if(!rows.length){ tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px">-</td></tr>'; return; }
   var f2 = n => (n === null || n === undefined) ? '-' : Number(n).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   tbody.innerHTML = rows.map(r => {
+    var fx = Number(r.usdkrw) || 0, w = u => (u == null || !fx) ? null : Math.round(Number(u) * fx / 1000);
     var chg = (r.price_usd && r.prev_settle) ? r.price_usd - r.prev_settle : null;
     var pct = (chg !== null) ? chg / r.prev_settle * 100 : null;
+    var chgW = (chg !== null && fx) ? Math.round(chg * fx / 1000) : null;
     var cls = chg === null ? '' : (chg >= 0 ? 'amt-plus' : 'amt-minus');
     var sign = chg !== null && chg > 0 ? '+' : '';
+    var t = (r.quote_time || '').slice(0, 5);
     return `<tr>
       <td><strong>${r.name_ko}</strong> <span style="color:var(--text-muted);font-size:11px">${r.code}</span></td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums">${f2(r.price_usd)}</td>
-      <td class="${cls}" style="text-align:right;font-variant-numeric:tabular-nums">${chg === null ? '-' : sign + f2(chg)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;font-size:14px"><strong>${r.krw_per_kg ? fmt(r.krw_per_kg) : '-'}</strong></td>
+      <td class="${cls}" style="text-align:right;font-variant-numeric:tabular-nums">${chgW === null ? '-' : sign + fmt(chgW)}</td>
       <td class="${cls}" style="text-align:right;font-variant-numeric:tabular-nums">${pct === null ? '-' : sign + pct.toFixed(2) + '%'}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums">${f2(r.high_usd)}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums">${f2(r.low_usd)}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${r.krw_per_kg ? fmt(r.krw_per_kg) : '-'}</strong></td>
-      <td style="font-variant-numeric:tabular-nums">${r.quote_date || ''} ${r.quote_time || ''}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${w(r.high_usd) === null ? '-' : fmt(w(r.high_usd))}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${w(r.low_usd) === null ? '-' : fmt(w(r.low_usd))}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--text-muted)">${f2(r.price_usd)}</td>
+      <td style="font-variant-numeric:tabular-nums;color:var(--text-muted)" title="${r.quote_date || ''} ${r.quote_time || ''}">${t}</td>
     </tr>`;
   }).join('');
   var r0 = rows[0];
   var upd = r0.updated_at ? new Date(r0.updated_at).toLocaleString('ko-KR', { hour12: false }) : '-';
-  document.getElementById('lmeMeta').innerText = 'USD/KRW ' + (r0.usdkrw ? f2(r0.usdkrw) : '-') + ' · 갱신 ' + upd;
+  document.getElementById('lmeMeta').innerText = '원/kg · 환율 ' + (r0.usdkrw ? f2(r0.usdkrw) : '-') + ' · 갱신 ' + upd;
 }
 
 
@@ -1552,11 +1554,180 @@ async function tiIssue(next){
   await loadTaxInvoices();
 }
 
+// ── v1.18: 공통 로드 오류 표시 ──
+function loadErr(tbodyId, cols, error){
+  var tb = document.getElementById(tbodyId);
+  if(tb) tb.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;padding:30px;color:var(--red)">불러오기 실패: ' + edEsc(error.message || error.code || '') + '</td></tr>';
+}
+
+// ── v1.18: 규격 마스터 (pyro_mf_guide_master) ──
+var guideView = [];
+async function loadGuides(){
+  var { data, error } = await sb.from('pyro_mf_price_guide').select('*').order('row_no', { ascending: true });
+  if(error){ loadErr('guideTableBody', 10, error); return; }
+  if(data){
+    var keep = document.getElementById('calcSpecSelect').value;
+    allGuides = data;
+    var q = document.getElementById('guideSearch');
+    if(q && q.value.trim()) filterGuide(); else renderGuides(allGuides);
+    populateGuideSelect(allGuides);
+    if(keep && allGuides.some(g => g.spec === keep)){ document.getElementById('calcSpecSelect').value = keep; onCalcSpecChange(); }
+  }
+}
+var GUIDE_REF_BASE = ['상동', 'AL 샤시'];
+function guideOpen(i){
+  var row = i == null ? null : guideView[i];
+  var refs = GUIDE_REF_BASE.slice();
+  allGuides.forEach(g => { if(g.price_ref && refs.indexOf(g.price_ref) < 0) refs.push(g.price_ref); });
+  ED.guide.fields.forEach(f => { if(f.k === 'price_ref') f.opts = refs; });
+  edOpen('guide', row);
+}
+function guideNextNo(){
+  return allGuides.reduce((m, g) => Math.max(m, Number(g.row_no) || 0), 0) + 1;
+}
+function pct1(x){ return x == null ? null : Math.round(Number(x) * 1000) / 10; }
+ED.guide = {
+  title: '규격',
+  fields: [
+    { k:'cat', l:'분류', t:'text', req:true },
+    { k:'spec', l:'규격', t:'text', req:true },
+    { k:'conductor', l:'도체', t:'text' },
+    { k:'price_ref', l:'적용 시세', t:'select', opts:GUIDE_REF_BASE, def:'상동' },
+    { k:'yield_pct', l:'수율 (%)', t:'number', req:true },
+    { k:'fee', l:'가공비 (원/kg)', t:'number', def:400 },
+    { k:'freight', l:'운송비 (원/kg)', t:'number', def:80 },
+    { k:'margin_pct', l:'목표마진 (%)', t:'number', def:25 },
+    { k:'row_no', l:'순번', t:'number', def:guideNextNo },
+    { k:'memo', l:'용도/메모', t:'textarea' }
+  ],
+  load: async (row) => {
+    var r = await sb.from('pyro_mf_guide_master').select('*').eq('spec', row.spec).maybeSingle();
+    if(r.data){ r.data.yield_pct = pct1(r.data.yield_rate); r.data.margin_pct = pct1(r.data.margin_rate); }
+    return r;
+  },
+  prep: (v, o) => {
+    if(v.yield_pct !== undefined){
+      if(v.yield_pct == null || v.yield_pct <= 0 || v.yield_pct > 100) return '수율은 0 초과 100 이하';
+      v.yield_rate = Math.round(v.yield_pct * 10) / 1000;
+    }
+    if(v.margin_pct !== undefined){
+      if(v.margin_pct != null && (v.margin_pct < 0 || v.margin_pct >= 100)) return '목표마진은 0 이상 100 미만';
+      v.margin_rate = v.margin_pct == null ? null : Math.round(v.margin_pct * 10) / 1000;
+    }
+    delete v.yield_pct; delete v.margin_pct;
+    if(!o){
+      if(allGuides.some(g => g.spec === v.spec)) return '같은 규격이 이미 있음';
+      v.is_active = true;
+    } else if(v.spec !== undefined && v.spec !== o.spec && allGuides.some(g => g.spec === v.spec)) return '같은 규격이 이미 있음';
+    return null;
+  },
+  save: async (v, o) => o ? sb.from('pyro_mf_guide_master').update(v).eq('id', o.id) : sb.from('pyro_mf_guide_master').insert(v),
+  removeLabel: '사용중지',
+  remove: async (o) => sb.from('pyro_mf_guide_master').update({ is_active:false }).eq('id', o.id),
+  reload: loadGuides
+};
+
+// ── v1.18: 사업부 실적·목표 ──
+var DIV_NAMES = { RE:'부동산임대', MF:'제조·스크랩', DS:'도소매·공구온', CM:'공통·관리', SV:'서비스' };
+var DIV_COLORS = { RE:'var(--blue)', MF:'var(--green)', DS:'var(--amber)', CM:'var(--purple)', SV:'var(--accent)' };
+function man(n){ n = Number(n) || 0; return (Math.abs(n) >= 10000 ? fmt(Math.round(n / 10000)) + '만' : fmt(n)) ; }
+function renderDivSummary(){
+  var box = document.getElementById('divSummary'); if(!box) return;
+  var yr = Number(todayKst().slice(0, 4));
+  if(!allDivPl.some(r => Number(r.yr) === yr)){ var ys = allDivPl.map(r => Number(r.yr)); if(ys.length) yr = Math.max.apply(null, ys); }
+  document.getElementById('divSumYr').textContent = yr;
+  var agg = {};
+  allDivPl.filter(r => Number(r.yr) === yr).forEach(r => {
+    var a = agg[r.div_code] = agg[r.div_code] || { name:r.div_name, rev:0, cogs:0, sga:0, op:0, oth:0 };
+    a.rev += Number(r.revenue) || 0; a.cogs += Number(r.cogs) || 0; a.sga += Number(r.sga) || 0; a.op += Number(r.op_income) || 0; a.oth += Number(r.other_expense) || 0;
+  });
+  var codes = Object.keys(agg).sort();
+  if(!codes.length){ box.innerHTML = '<div style="color:var(--text-muted)">실적 없음</div>'; return; }
+  box.innerHTML = codes.map(c => {
+    var a = agg[c], mg = a.rev ? Math.round(a.op / a.rev * 100) : null;
+    return '<div style="background:#0b1120;padding:14px;border-radius:8px;border-left:4px solid ' + (DIV_COLORS[c] || 'var(--border)') + '">'
+      + '<div style="font-size:11px;color:var(--text-muted)">' + edEsc(c) + ' ' + edEsc(a.name || DIV_NAMES[c] || '') + '</div>'
+      + '<div style="font-size:16px;font-weight:700;color:#fff;margin-top:4px">매출 ' + man(a.rev) + '</div>'
+      + '<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">원가 ' + man(a.cogs) + ' · 판관비 ' + man(a.sga) + (a.oth ? ' · 영업외 ' + man(a.oth) : '') + '</div>'
+      + '<div style="font-size:12px;font-weight:700;margin-top:2px;color:' + (a.op >= 0 ? 'var(--green)' : 'var(--red)') + '">영업이익 ' + (a.op >= 0 ? '+' : '') + man(a.op) + (mg != null ? ' (' + mg + '%)' : '') + '</div></div>';
+  }).join('');
+}
+var allDivT = [], divtView = [];
+async function loadDivTargets(){
+  var { data, error } = await sb.from('pyro_div_targets').select('*').order('target_ym', { ascending:false }).order('div_code');
+  if(error){ loadErr('divtRows', 9, error); return; }
+  allDivT = (data || []).filter(r => r.is_active !== false);
+  renderDivTargets();
+}
+function rate(a, t){ t = Number(t) || 0; if(!t) return '-'; var p = Math.round((Number(a) || 0) / t * 100); return '<span style="font-weight:700;color:' + (p >= 100 ? 'var(--green)' : (p >= 70 ? 'var(--amber)' : 'var(--red)')) + '">' + p + '%</span>'; }
+function renderDivTargets(){
+  var tb = document.getElementById('divtRows'); if(!tb) return;
+  divtView = allDivT;
+  if(!divtView.length){ tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px">등록된 목표가 없습니다.</td></tr>'; return; }
+  tb.innerHTML = divtView.map((t, i) => {
+    var y = Number(t.target_ym.slice(0, 4)), m = Number(t.target_ym.slice(5, 7));
+    var act = allDivPl.filter(r => Number(r.yr) === y && Number(r.mo) === m && r.div_code === t.div_code);
+    var rev = act.reduce((s, r) => s + (Number(r.revenue) || 0), 0), op = act.reduce((s, r) => s + (Number(r.op_income) || 0), 0);
+    return '<tr class="ed-row" onclick="divtOpen(' + i + ')"><td>' + edEsc(t.target_ym) + '</td><td><span class="badge">' + edEsc(t.div_code) + '</span> ' + edEsc(DIV_NAMES[t.div_code] || '') + '</td>'
+      + '<td style="text-align:right">' + fmt(t.target_revenue) + '</td><td style="text-align:right">' + fmt(rev) + '</td><td style="text-align:right">' + rate(rev, t.target_revenue) + '</td>'
+      + '<td style="text-align:right">' + fmt(t.target_profit) + '</td><td style="text-align:right">' + fmt(op) + '</td><td style="text-align:right">' + rate(op, t.target_profit) + '</td>'
+      + '<td style="font-size:11px;color:var(--text-muted)">' + edEsc(t.memo || '') + '</td></tr>';
+  }).join('');
+}
+function divtOpen(i){
+  var row = i == null ? null : divtView[i];
+  var opts = Object.keys(DIV_NAMES);
+  if(row && opts.indexOf(row.div_code) < 0) opts.push(row.div_code);
+  ED.divt.fields.forEach(f => { if(f.k === 'div_code') f.opts = opts; });
+  edOpen('divt', row);
+}
+ED.divt = {
+  title: '사업부 목표',
+  fields: [
+    { k:'target_ym', l:'월 (YYYY-MM)', t:'text', req:true, def:() => todayKst().slice(0, 7) },
+    { k:'div_code', l:'사업부', t:'select', opts:Object.keys(DIV_NAMES), def:'MF' },
+    { k:'target_revenue', l:'목표 매출 (원)', t:'number', req:true },
+    { k:'target_profit', l:'목표 영업이익 (원)', t:'number', req:true },
+    { k:'memo', l:'메모', t:'textarea' }
+  ],
+  prep: (v, o) => {
+    var ym = v.target_ym !== undefined ? v.target_ym : o.target_ym, dc = v.div_code !== undefined ? v.div_code : o.div_code;
+    if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(ym)) return '월은 2026-09 형식';
+    if(allDivT.some(t => t.target_ym === ym && t.div_code === dc && (!o || t.id !== o.id))) return '같은 월·사업부 목표가 이미 있음';
+    return null;
+  },
+  save: async (v, o) => o ? sb.from('pyro_div_targets').update(v).eq('id', o.id) : sb.from('pyro_div_targets').insert(v),
+  remove: async (o) => sb.from('pyro_div_targets').update({ is_active:false }).eq('id', o.id),
+  reload: loadDivTargets
+};
+
+// ── v1.18: 사업주 계정·이자 KPI (원장에서 계산) ──
+function renderOwnerKpi(rows){
+  var inv = 0, drw = 0, ni = 0, nd = 0;
+  rows.forEach(r => { var a = Number(r.invest_in) || 0, b = Number(r.draw_out) || 0; if(a){ inv += a; ni++; } if(b){ drw += b; nd++; } });
+  var net = inv - drw, set = (id, t) => { var e = document.getElementById(id); if(e) e.textContent = t; };
+  set('kpiInvestIn', fmt(inv) + ' 원'); set('kpiInvestInSub', '출자 ' + ni + '건');
+  set('kpiDrawOut', fmt(drw) + ' 원'); set('kpiDrawOutSub', '인출 ' + nd + '건');
+  set('kpiNetCum', fmt(net) + ' 원'); set('kpiNetCumSub', net < 0 ? '⚠️ 인출 초과' : '');
+  var e = document.getElementById('kpiNetCum'); if(e) e.style.color = net < 0 ? 'var(--red)' : '';
+  var s = document.getElementById('kpiNetCumSub'); if(s) s.style.color = net < 0 ? 'var(--red)' : '';
+  set('ownerCount', rows.length);
+  set('trgNet', net < 0 ? fmt(net) + '원의 초과인출' : '순잔액 ' + fmt(net) + '원(초과인출 아님)');
+}
+function renderInterestKpi(){
+  var rows = allJournals.filter(r => r.account === '이자비용' || r.pl_code === '9200');
+  var amt = rows.reduce((s, r) => s + (Number(r.dr_amt) || 0) - (Number(r.cr_amt) || 0), 0);
+  var e = document.getElementById('kpiInterestExp'); if(e) e.textContent = fmt(amt) + ' 원';
+  var s = document.getElementById('kpiInterestExpSub'); if(s) s.textContent = '이자 전표 ' + rows.length + '건';
+  var ti = document.getElementById('trgInt'); if(ti) ti.textContent = man(amt) + ' 원';
+}
+
 // ── 원가 견적 이력 (v1.17) ──
 var allCq = [], cqView = [];
 var CQ_ST = { open:'진행', won:'수주', lost:'실주' };
 async function loadCq(){
-  var { data } = await sb.from('pyro_cost_quotes').select('*').order('quote_date', { ascending:false }).order('quote_no', { ascending:false });
+  var { data, error } = await sb.from('pyro_cost_quotes').select('*').order('quote_date', { ascending:false }).order('quote_no', { ascending:false });
+  if(error){ loadErr('cqRows', 10, error); return; }
   if(data){ allCq = data.filter(r => r.is_active !== false && r.status !== 'void'); filterCq(); }
 }
 function filterCq(){
@@ -1612,7 +1783,8 @@ ED.cq = {
 // ── 세무 일정 (v1.17) ──
 var allTt = [], ttView = [];
 async function loadTaxTasks(){
-  var { data } = await sb.from('pyro_tax_tasks').select('*').order('due_date');
+  var { data, error } = await sb.from('pyro_tax_tasks').select('*').order('due_date');
+  if(error){ loadErr('ttRows', 7, error); return; }
   if(data){ allTt = data.filter(r => r.is_active !== false); renderTaxTasks(); }
 }
 function renderTaxTasks(){
@@ -1917,30 +2089,25 @@ async function loadAllData(){
     // 1. 금속 최신 시세판
     await loadMetals();
 
-    // 2. 67종 매입 견적 마스터 (산식 검증 완료 뷰)
-    var { data: gData, error: gErr } = await sb.from('pyro_mf_price_guide').select('*').order('row_no', { ascending: true });
-    if(gErr){
-      var gtb = document.querySelector('#tab-mf-guide tbody');
-      if(gtb) gtb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--red)">불러오기 실패: ' + edEsc(gErr.message) + '</td></tr>';
-    }
-    if(gData){
-      allGuides = gData;
-      renderGuides(allGuides);
-      populateGuideSelect(allGuides);
-    }
+    // 2. 규격 마스터
+    await loadGuides();
 
     // 3. 로트 진행판
     await loadLots();
 
     // 4. 사업부별 손익 (pyro_div_pl)
-    var { data: plData } = await sb.from('pyro_div_pl').select('*').order('yr', { ascending: false }).order('mo', { ascending: false });
+    var { data: plData, error: plErr } = await sb.from('pyro_div_pl').select('*').order('yr', { ascending: false }).order('mo', { ascending: false });
+    if(plErr) loadErr('divPlTableRows', 10, plErr);
     if(plData){
       allDivPl = plData;
       renderDivPl(allDivPl);
+      renderDivSummary();
     }
+    await loadDivTargets();
 
     // 5. 사업주 계정 (pyro_owner_account)
-    var { data: oaData } = await sb.from('pyro_owner_account').select('*').order('tx_date', { ascending: true });
+    var { data: oaData, error: oaErr } = await sb.from('pyro_owner_account').select('*').order('tx_date', { ascending: true });
+    if(oaErr) loadErr('ownerAccTableRows', 8, oaErr);
     if(oaData){
       allOwnerAcc = oaData;
       renderOwnerAcc(allOwnerAcc);
@@ -1948,6 +2115,7 @@ async function loadAllData(){
 
     // 6. 분개 전표 (pyro_journal)
     await loadJournal();
+    renderInterestKpi();
 
     // 7. 통장 거래 (pyro_bank)
     await loadBank();
@@ -2028,6 +2196,7 @@ function renderVatCard(rows){
 // ── 사업부 손익 렌더러 (WO-11) ──
 function renderDivPl(rows){
   var tbody = document.getElementById('divPlTableRows');
+  var dc = document.getElementById('divPlCount'); if(dc) dc.textContent = rows ? rows.length : 0;
   if(!rows || rows.length === 0){
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px">손익 데이터가 없습니다.</td></tr>';
     return;
@@ -2065,6 +2234,7 @@ function filterDivPl(){
 // ── 사업주 계정 렌더러 (WO-12) ──
 function renderOwnerAcc(rows){
   var tbody = document.getElementById('ownerAccTableRows');
+  renderOwnerKpi(rows || []);
   if(!rows || rows.length === 0){
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px">사업주 거래 내역이 없습니다.</td></tr>';
     return;
@@ -2266,8 +2436,9 @@ function renderGuides(rows){
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px">견적 기준 데이터가 없습니다.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(r => `
-    <tr>
+  guideView = rows;
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr class="ed-row" onclick="guideOpen(${i})">
       <td style="color:var(--text-muted)">${r.cat}</td>
       <td><strong>${r.spec}</strong></td>
       <td>${r.conductor || '-'}</td>
