@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.15 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.16 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -265,7 +265,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 
 <div id="shell">
 <aside id="sb">
-  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.15</span><small>개인사업자 파이로</small></div></div>
+  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.16</span><small>개인사업자 파이로</small></div></div>
   <nav class="sb-nav" id="sbNav">
     <div class="sb-grp">고물상 · 비철</div>
     <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">🪙</span><span class="lb">비철 시세 관제</span></div>
@@ -528,6 +528,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         <div class="panel-title">🔧 공구온 & 다모아공구 베스트 랭킹 카탈로그</div>
         <div style="display:flex;gap:10px">
           <input type="text" id="toolSearch" class="input" placeholder="품명/브랜드/규격 검색..." onkeyup="filterTools()" style="width:240px">
+          <button class="btn btn-primary" onclick="edOpen('tool')">+ 상품</button>
         </div>
       </div>
       <div class="prod-grid" id="toolsGrid">
@@ -610,6 +611,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <div class="panel">
       <div class="panel-head">
         <div class="panel-title">📋 튜브·캡 사출 협력업체별 규격 단가표</div>
+        <div style="display:flex;gap:8px"><input type="text" id="vendorSearch" class="input" placeholder="협력사/품목 검색..." onkeyup="filterVendors()" style="width:200px"><button class="btn btn-primary" onclick="edOpen('vendor')">+ 단가</button></div>
       </div>
       <div class="table-wrap">
         <table>
@@ -623,12 +625,8 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
               <th>비고</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>선경</td><td>원터치 캡</td><td>Φ35 플립탑</td><td style="text-align:right">32 원</td><td>10,000 개</td><td>치약용 표준 캡</td></tr>
-            <tr><td>경진</td><td>스크류 캡</td><td>Φ19 스크류</td><td style="text-align:right">24 원</td><td>10,000 개</td><td>립글로즈용 캡</td></tr>
-            <tr><td>하이캡</td><td>8각 캡</td><td>Φ25 팔각</td><td style="text-align:right">28 원</td><td>10,000 개</td><td>핸드크림용</td></tr>
-            <tr><td>필앤텍</td><td>PE 원단 튜브</td><td>Φ35*125mm</td><td style="text-align:right">52 원</td><td>10,000 개</td><td>단층/다층 원단 압출</td></tr>
-            <tr><td>노성</td><td>골판지 박스</td><td>500*350*300</td><td style="text-align:right">850 원</td><td>1,000 개</td><td>튜브 500개입 포장 박스</td></tr>
+          <tbody id="vendorRows">
+            <tr><td colspan="6" style="text-align:center;padding:30px">-</td></tr>
           </tbody>
         </table>
       </div>
@@ -1212,7 +1210,7 @@ async function startApp(){
   var userDisplay = document.getElementById('userEmail');
   if(userDisplay) userDisplay.innerText = USER || '로그인 완료';
   await loadAllData();
-  renderTools();
+  await Promise.all([loadTools(), loadVendors()]);
   recalcCost();
 }
 
@@ -1421,10 +1419,18 @@ ED.ti = {
     { k:'settle_status', l:'정산상태', t:'text' },
     { k:'approval_no', l:'승인번호', t:'text' }
   ],
-  lockRow: (r) => r.source === 'hometax' ? ['flow','write_date','issue_date','supplier','buyer','supply_amt','vat_amt','total_amt','ti_type','approval_no'] : null,
-  noRemove: (r) => r.source === 'hometax',
+  lockRow: (r) => (r.source === 'hometax' || r.issue_status === 'requested' || r.issue_status === 'approved') ? ['flow','write_date','issue_date','supplier','buyer','supply_amt','vat_amt','total_amt','ti_type','approval_no'] : null,
+  noRemove: (r) => r.source === 'hometax' || ['requested','approved','issued'].indexOf(r.issue_status) >= 0,
+  after: async (r) => {
+    if(r.source !== 'manual') return '';
+    var st = r.issue_status || 'none', h = '<div class="ed-sub"><div class="ed-sub-h"><span>국세청 발행' + (ISSUE_LABEL[st] ? ' · ' + ISSUE_LABEL[st] : '') + '</span></div>';
+    if(st === 'none' || st === 'failed') h += (r.issue_error ? '<div style="font-size:12px;color:var(--red)">' + edEsc(r.issue_error) + '</div>' : '') + '<button class="btn btn-ghost" id="edIssue" onclick="tiIssue(\'requested\')">발행 요청</button>';
+    else if(st === 'requested') h += '<div style="display:flex;gap:8px"><button class="btn btn-primary" id="edIssue" onclick="tiIssue(\'approved\')">발행 승인</button><button class="btn btn-ghost" onclick="tiIssue(\'none\')">요청 취소</button></div>';
+    else if(st === 'approved') h += '<div style="font-size:12px;color:var(--text-muted)">' + edEsc((r.issue_approved_at || '').slice(0,16).replace('T',' ')) + '</div>';
+    return h + '</div>';
+  },
   onOpen: (row) => {
-    if(row && row.source === 'hometax') return;
+    if(row && (row.source === 'hometax' || row.issue_status === 'requested' || row.issue_status === 'approved')) return;
     var s = document.getElementById('ed_supply_amt'), v = document.getElementById('ed_vat_amt'), tt = document.getElementById('ed_total_amt');
     var num = x => { var n = Number(String(x).replace(/,/g, '')); return isFinite(n) ? n : null; };
     var auto = { vat: !v.value, tot: !tt.value };
@@ -1453,6 +1459,73 @@ ED.ti = {
   remove: async (o) => sb.from('pyro_tax_invoices').update({ is_void:true, status:'void' }).eq('id', o.id),
   reload: loadTaxInvoices
 };
+
+var allVendors = [], vendorView = [];
+async function loadVendors(){
+  var { data } = await sb.from('pyro_vendor_prices').select('*').order('vendor_name').order('item');
+  if(data){
+    allVendors = data.filter(r => r.is_active !== false);
+    var q = document.getElementById('vendorSearch');
+    if(q && q.value.trim()) filterVendors(); else renderVendors(allVendors);
+  }
+}
+function renderVendors(rows){
+  vendorView = rows;
+  var tb = document.getElementById('vendorRows');
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px">등록된 단가가 없습니다.</td></tr>'; return; }
+  tb.innerHTML = rows.map((r, i) => `<tr class="ed-row" onclick="edOpen('vendor', vendorView[${i}])"><td>${edEsc(r.vendor_name)}</td><td>${edEsc(r.item)}</td><td>${edEsc(r.spec || '-')}</td><td style="text-align:right">${fmt(r.unit_price)} 원</td><td>${edEsc(r.moq || '-')}</td><td>${edEsc(r.memo || '-')}</td></tr>`).join('');
+}
+function filterVendors(){
+  var q = document.getElementById('vendorSearch').value.trim().toLowerCase();
+  renderVendors(allVendors.filter(r => [r.vendor_name, r.item, r.spec, r.memo].some(x => x && String(x).toLowerCase().includes(q))));
+}
+ED.tool = {
+  title: '공구온 상품',
+  fields: [
+    { k:'code', l:'상품코드', t:'text', req:true, lock:true },
+    { k:'name', l:'품명', t:'text', req:true },
+    { k:'brand', l:'브랜드', t:'text' },
+    { k:'spec', l:'규격', t:'text' },
+    { k:'buy_price', l:'매입가 (원)', t:'number', req:true },
+    { k:'std_price', l:'판매가 (원)', t:'number', req:true },
+    { k:'img', l:'이미지 주소', t:'text' }
+  ],
+  save: async (v, o) => o ? sb.from('pyro_tools').update(v).eq('id', o.id) : sb.from('pyro_tools').insert(v),
+  remove: async (o) => sb.from('pyro_tools').update({ is_active:false }).eq('id', o.id),
+  reload: loadTools
+};
+ED.vendor = {
+  title: '협력사 단가',
+  fields: [
+    { k:'vendor_name', l:'협력사', t:'text', req:true },
+    { k:'item', l:'품목', t:'text', req:true },
+    { k:'spec', l:'규격', t:'text' },
+    { k:'unit_price', l:'단가 (원)', t:'number', req:true },
+    { k:'moq', l:'최소발주수량', t:'text' },
+    { k:'memo', l:'비고', t:'text' }
+  ],
+  save: async (v, o) => o ? sb.from('pyro_vendor_prices').update(v).eq('id', o.id) : sb.from('pyro_vendor_prices').insert(v),
+  remove: async (o) => sb.from('pyro_vendor_prices').update({ is_active:false }).eq('id', o.id),
+  reload: loadVendors
+};
+
+// ── 세금계산서 발행 요청·승인 (v1.16) — 실제 발행은 승인된 건만 발행기가 처리 ──
+var ISSUE_LABEL = { none:'', requested:'발행요청', approved:'발행승인', issued:'발행완료', failed:'발행실패' };
+async function tiIssue(next){
+  var o = edState && edState.orig; if(!o) return;
+  var b = document.getElementById('edIssue'), err = document.getElementById('edErr');
+  if(next === 'approved' && !b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = '국세청 발행 — 한 번 더 누르면 승인'; return; }
+  var patch = { issue_status: next, issue_error: null };
+  if(next === 'requested') patch.issue_requested_at = new Date().toISOString();
+  if(next === 'approved') patch.issue_approved_at = new Date().toISOString();
+  if(next === 'none'){ patch.issue_requested_at = null; patch.issue_approved_at = null; }
+  edBusy(true); b.disabled = true;
+  var res = await sb.from('pyro_tax_invoices').update(patch).eq('id', o.id).eq('source', 'manual');
+  edBusy(false); b.disabled = false;
+  if(res.error){ err.textContent = '실패: ' + res.error.message; return; }
+  edClose(); edToast(ISSUE_LABEL[next] || '요청 취소됨');
+  await loadTaxInvoices();
+}
 
 async function loadJournal(){
   var { data } = await sb.from('pyro_journal').select('*').order('jv_date', { ascending: false }).order('jv_no', { ascending: false });
@@ -1970,7 +2043,7 @@ function renderTaxInvoices(rows){
       <td class="amt-neutral">${fmt(r.vat_amt)}</td>
       <td style="font-weight:700;text-align:right">${fmt(r.total_amt)}</td>
       <td><span class="tag ${r.settle_status && r.settle_status.includes('완료') ? 'tag-tax-ok' : 'tag-tax-warn'}">${r.settle_status || '미정산'}</span></td>
-      <td style="font-size:10.5px;color:var(--text-muted)">${r.approval_no || '-'}</td>
+      <td style="font-size:10.5px;color:var(--text-muted)">${r.approval_no || '-'}${ISSUE_LABEL[r.issue_status] ? ' <span class="tag ' + (r.issue_status === 'failed' ? 'tag-tax-warn' : 'tag-wait') + '">' + ISSUE_LABEL[r.issue_status] + '</span>' : ''}</td>
     </tr>
   `).join('');
 }
@@ -2146,30 +2219,33 @@ function filterLots(){
 }
 
 // ── 24 공구온 & B2B 마스터 ──
-var TOOLS_SEED = [
-  {id:1, code:"CR-847291", name:"[크레텍] 스테인리스 카라비너 8mm (스프링 스냅 후크)", brand:"Cretec Std", spec:"SUS304 / 8x80mm", buyPrice:1200, stdPrice:1800, img:"https://picsum.photos/seed/tool1/300/200"},
-  {id:2, code:"CR-847292", name:"[크레텍] 스테인리스 카라비너 10mm 강구조용", brand:"Cretec Std", spec:"SUS304 / 10x100mm", buyPrice:1900, stdPrice:2800, img:"https://picsum.photos/seed/tool2/300/200"},
-  {id:3, code:"CR-847293", name:"[크레텍] 육각 렌치볼트 M6x25 (100개입)", brand:"BoltMaster", spec:"SCM435 / 고장력 10.9", buyPrice:4500, stdPrice:6500, img:"https://picsum.photos/seed/tool3/300/200"},
-  {id:4, code:"CR-847294", name:"[크레텍] 육각 렌치볼트 M8x30 (100개입)", brand:"BoltMaster", spec:"SCM435 / 고장력 10.9", buyPrice:6200, stdPrice:8900, img:"https://picsum.photos/seed/tool4/300/200"},
-  {id:5, code:"CR-847295", name:"[크레텍] 산업용 고강도 샤클 1/2인치", brand:"RiggingPro", spec:"단조강 / WLL 2.0Ton", buyPrice:3800, stdPrice:5500, img:"https://picsum.photos/seed/tool5/300/200"},
-  {id:6, code:"CR-847296", name:"[크레텍] 테프론 씰링 테이프 15m (10롤)", brand:"SealTech", spec:"0.1mm x 19mm x 15m", buyPrice:3500, stdPrice:5000, img:"https://picsum.photos/seed/tool6/300/200"}
-];
-
+var allTools = [], toolView = [];
+async function loadTools(){
+  var { data } = await sb.from('pyro_tools').select('*').order('code');
+  if(data){
+    allTools = data.filter(r => r.is_active !== false);
+    var q = document.getElementById('toolSearch');
+    if(q && q.value.trim()) filterTools(); else renderTools(allTools);
+  }
+}
 function renderTools(list){
-  var items = list || TOOLS_SEED;
+  var items = list || allTools;
+  toolView = items;
   var grid = document.getElementById('toolsGrid');
-  grid.innerHTML = items.map(t => {
-    var margin = Math.round(((t.stdPrice - t.buyPrice) / t.stdPrice) * 100);
+  if(!items.length){ grid.innerHTML = '<div style="padding:30px;color:var(--text-muted)">등록된 상품이 없습니다.</div>'; return; }
+  grid.innerHTML = items.map((t, i) => {
+    var sp = Number(t.std_price) || 0, bp = Number(t.buy_price) || 0;
+    var margin = sp > 0 ? Math.round(((sp - bp) / sp) * 100) : 0;
     return `
-      <div class="prod-card">
-        <img src="${t.img}" class="prod-img" alt="${t.name}">
-        <div style="font-size:11px;color:var(--text-muted)">[${t.brand}] ${t.code}</div>
-        <div class="prod-title" title="${t.name}">${t.name}</div>
-        <div style="font-size:11px;color:var(--accent)">규격: ${t.spec}</div>
+      <div class="prod-card ed-row" onclick="edOpen('tool', toolView[${i}])">
+        ${t.img ? `<img src="${edEsc(t.img)}" class="prod-img" alt="${edEsc(t.name)}">` : ''}
+        <div style="font-size:11px;color:var(--text-muted)">[${edEsc(t.brand || '-')}] ${edEsc(t.code)}</div>
+        <div class="prod-title" title="${edEsc(t.name)}">${edEsc(t.name)}</div>
+        <div style="font-size:11px;color:var(--accent)">규격: ${edEsc(t.spec || '-')}</div>
         <div class="prod-price-row">
           <div>
-            <div style="font-size:10px;color:var(--text-muted)">매입(공급가): ${fmt(t.buyPrice)}원</div>
-            <div style="font-size:15px;font-weight:700;color:var(--text)">${fmt(t.stdPrice)} 원</div>
+            <div style="font-size:10px;color:var(--text-muted)">매입(공급가): ${fmt(bp)}원</div>
+            <div style="font-size:15px;font-weight:700;color:var(--text)">${fmt(sp)} 원</div>
           </div>
           <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--green)">마진 ${margin}%</span>
         </div>
@@ -2180,7 +2256,7 @@ function renderTools(list){
 
 function filterTools(){
   var q = document.getElementById('toolSearch').value.trim().toLowerCase();
-  var filtered = TOOLS_SEED.filter(t => t.name.toLowerCase().includes(q) || t.brand.toLowerCase().includes(q) || t.spec.toLowerCase().includes(q));
+  var filtered = allTools.filter(t => [t.name, t.brand, t.spec, t.code].some(x => x && String(x).toLowerCase().includes(q)));
   renderTools(filtered);
 }
 
