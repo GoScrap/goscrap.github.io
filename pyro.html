@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.10 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.11 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -129,6 +129,26 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .prod-price-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:auto}
 
 footer{text-align:center;padding:24px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:40px}
+/* 공통 편집기 (v1.11) */
+.ed-back{position:fixed;inset:0;background:rgba(2,6,23,.62);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.ed-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:440px;max-width:100%;max-height:92vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,.45)}
+.ed-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:15px}
+.ed-x{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1}
+.ed-body{padding:16px 20px;display:grid;gap:12px}
+.ed-f label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.ed-f .input,.ed-f .select{width:100%}
+.ed-f .input[readonly]{opacity:.6}
+.ed-err{color:var(--red);font-size:12px;min-height:16px}
+.ed-foot{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--border)}
+.ed-foot .sp{flex:1}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(239,68,68,.5)}
+.btn-danger.armed{background:var(--red);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+tr.ed-row{cursor:pointer}
+.ed-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;z-index:1100;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{background:#fff}
+@media (max-width:600px){.ed-back{padding:0;align-items:stretch}.ed-card{width:100%;max-height:none;border-radius:0}}
 </style>
 </head>
 <body>
@@ -201,7 +221,7 @@ footer{text-align:center;padding:24px;font-size:11px;color:var(--text-muted);bor
   <div class="brand">
     <div class="logo">PY</div>
     <div>
-      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.10</span></div>
+      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.11</span></div>
       <div style="font-size:11px;color:var(--text-muted)">개인사업자 파이로 (PYRO)</div>
     </div>
   </div>
@@ -311,6 +331,7 @@ footer{text-align:center;padding:24px;font-size:11px;color:var(--text-muted);bor
         <div class="panel-title">📈 금속·스크랩 최신 시세판 (<span id="metalCount">0</span>종)</div>
         <div style="display:flex;gap:8px">
           <input type="text" id="metalSearch" class="input" placeholder="금속명/규격 검색..." onkeyup="filterMetals()" style="width:200px">
+          <button class="btn btn-primary" onclick="edOpen('metal')">+ 추가</button>
         </div>
       </div>
       <div class="table-wrap" style="max-height:420px;overflow-y:auto">
@@ -988,6 +1009,7 @@ var sb = null;
 var USER = null;
 
 var allMetals = [];
+var metalView = [];
 var allGuides = [];
 var allLots = [];
 var allDivPl = [];
@@ -1171,11 +1193,111 @@ function renderLme(rows){
   document.getElementById('lmeMeta').innerText = 'USD/KRW ' + (r0.usdkrw ? f2(r0.usdkrw) : '-') + ' · 갱신 ' + upd;
 }
 
-async function loadAllData(){
-  loadLme();
-  if(!lmeTimer) lmeTimer = setInterval(loadLme, 5 * 60 * 1000);
-  try {
-    // 1. 금속 최신 시세판
+
+// ── 공통 편집기 (v1.11) ──
+function todayKst(){ return new Date(Date.now() + 9*3600*1000).toISOString().slice(0,10); }
+var ED = {
+  metal: {
+    title: '금속 시세',
+    table: 'pyro_metal_prices',
+    fields: [
+      { k:'metal', l:'금속/품목', t:'text', req:true, lock:true },
+      { k:'grade', l:'등급/출처', t:'text', req:true, lock:true, def:'일반' },
+      { k:'price', l:'시세 (원)', t:'number', req:true },
+      { k:'unit', l:'단위', t:'text', req:true, def:'KRW/kg' },
+      { k:'price_date', l:'기준일', t:'date', req:true, def:todayKst }
+    ],
+    // 기존 행 수정 시 기준일은 오늘로 새로 기록(이력 보존)
+    editDefaults: { price_date: todayKst },
+    save: async (v) => sb.from('pyro_metal_prices').upsert(v, { onConflict: 'metal,price_date,grade' }),
+    remove: async (o) => sb.from('pyro_metal_prices').delete().match({ metal:o.metal, grade:o.grade, price_date:o.price_date }),
+    reload: loadMetals
+  }
+};
+var edState = null;
+function edEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function edOpen(kind, row){
+  var cfg = ED[kind]; if(!cfg) return;
+  var isEdit = !!row;
+  edState = { kind:kind, cfg:cfg, orig:row || null };
+  var val = function(f){
+    if(isEdit && cfg.editDefaults && cfg.editDefaults[f.k]) return cfg.editDefaults[f.k]();
+    if(isEdit && row[f.k] != null) return row[f.k];
+    return typeof f.def === 'function' ? f.def() : (f.def == null ? '' : f.def);
+  };
+  var html = '<div class="ed-back" id="edBack" onclick="if(event.target===this)edClose()"><div class="ed-card" role="dialog" aria-modal="true">'
+    + '<div class="ed-head"><span>' + edEsc(cfg.title) + (isEdit ? ' 수정' : ' 추가') + '</span><button class="ed-x" onclick="edClose()" aria-label="닫기">×</button></div>'
+    + '<div class="ed-body">'
+    + cfg.fields.map(function(f){
+        var ro = (isEdit && f.lock) ? ' readonly' : '';
+        var input;
+        if(f.t === 'select'){
+          input = '<select class="select" id="ed_' + f.k + '"' + (ro ? ' disabled' : '') + '>' + f.opts.map(function(o){ return '<option' + (String(val(f))===o ? ' selected' : '') + '>' + edEsc(o) + '</option>'; }).join('') + '</select>';
+        } else {
+          input = '<input class="input" id="ed_' + f.k + '" type="' + (f.t==='number' ? 'text' : f.t) + '"' + (f.t==='number' ? ' inputmode="decimal" style="text-align:right"' : '') + ' value="' + edEsc(val(f)) + '"' + ro + '>';
+        }
+        return '<div class="ed-f"><label for="ed_' + f.k + '">' + edEsc(f.l) + (f.req ? ' *' : '') + '</label>' + input + '</div>';
+      }).join('')
+    + '<div class="ed-err" id="edErr"></div></div>'
+    + '<div class="ed-foot">'
+    + (isEdit && cfg.remove ? '<button class="btn btn-danger" id="edDel" onclick="edDelete()">삭제</button>' : '')
+    + '<span class="sp"></span><button class="btn btn-ghost" onclick="edClose()">취소</button>'
+    + '<button class="btn btn-primary" id="edSave" onclick="edSave()">저장</button></div>'
+    + '</div></div>';
+  edClose();
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.addEventListener('keydown', edKey);
+  var first = document.querySelector('#edBack .input:not([readonly]), #edBack select:not([disabled])');
+  if(first) first.focus();
+}
+function edKey(e){
+  if(e.key === 'Escape') edClose();
+  if(e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') edSave();
+}
+function edClose(){
+  var b = document.getElementById('edBack'); if(b) b.remove();
+  document.removeEventListener('keydown', edKey);
+}
+function edToast(msg){
+  var d = document.createElement('div'); d.className = 'ed-toast'; d.textContent = msg;
+  document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2200);
+}
+function edBusy(on){
+  ['edSave','edDel'].forEach(function(id){ var b = document.getElementById(id); if(b) b.disabled = on; });
+}
+async function edSave(){
+  if(!edState) return;
+  var cfg = edState.cfg, v = {}, err = document.getElementById('edErr');
+  for(var i = 0; i < cfg.fields.length; i++){
+    var f = cfg.fields[i], el = document.getElementById('ed_' + f.k);
+    var x = el.value.trim();
+    if(f.req && x === ''){ err.textContent = f.l + ' 입력 필요'; el.focus(); return; }
+    if(f.t === 'number' && x !== ''){
+      x = Number(x.replace(/,/g, ''));
+      if(!isFinite(x)){ err.textContent = f.l + ' 숫자 확인'; el.focus(); return; }
+    }
+    v[f.k] = x === '' ? null : x;
+  }
+  edBusy(true); err.textContent = '';
+  var res = await cfg.save(v, edState.orig);
+  edBusy(false);
+  if(res && res.error){ err.textContent = '저장 실패: ' + res.error.message; return; }
+  edClose(); edToast('저장됨');
+  if(cfg.reload) await cfg.reload();
+}
+async function edDelete(){
+  var b = document.getElementById('edDel');
+  if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = '한 번 더 누르면 삭제'; return; }
+  var cfg = edState.cfg;
+  edBusy(true);
+  var res = await cfg.remove(edState.orig);
+  edBusy(false);
+  if(res && res.error){ document.getElementById('edErr').textContent = '삭제 실패: ' + res.error.message; return; }
+  edClose(); edToast('삭제됨');
+  if(cfg.reload) await cfg.reload();
+}
+
+async function loadMetals(){
     var { data: mData } = await sb.from('pyro_metal_price_latest').select('*').order('price_date', { ascending: false });
     if(mData){
       allMetals = mData;
@@ -1197,6 +1319,14 @@ async function loadAllData(){
         document.getElementById('kpiPriceAlDate').innerText = '기준일: ' + alSash.price_date + ' (' + (alSash.grade||'시세') + ')';
       }
     }
+}
+
+async function loadAllData(){
+  loadLme();
+  if(!lmeTimer) lmeTimer = setInterval(loadLme, 5 * 60 * 1000);
+  try {
+    // 1. 금속 최신 시세판
+    await loadMetals();
 
     // 2. 67종 매입 견적 마스터 (산식 검증 완료 뷰)
     var { data: gData } = await sb.from('pyro_mf_price_guide').select('*').order('row_no', { ascending: true });
@@ -1489,8 +1619,9 @@ function renderMetals(rows){
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px">등록된 금속 시세가 없습니다.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(r => `
-    <tr>
+  metalView = rows;
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr class="ed-row" onclick="edOpen('metal', metalView[${i}])">
       <td><strong>${r.metal}</strong></td>
       <td class="amt-plus">${fmt(r.price)} 원</td>
       <td style="color:var(--text-muted)">${r.unit || 'KRW/kg'}</td>
