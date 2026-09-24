@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.12 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.13 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -151,6 +151,17 @@ tr.ed-row{cursor:pointer}
 .ed-sub-i{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer}
 .ed-sub-i:hover{border-color:var(--accent)}
 .btn-xs{padding:4px 8px;font-size:11px}
+.jv-card{width:760px}
+.jv-head{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.jv-lines{width:100%;border-collapse:collapse;font-size:12.5px}
+.jv-lines th{padding:6px;font-size:11px}
+.jv-lines td{padding:4px;border-bottom:none}
+.jv-lines .input{width:100%;padding:6px 8px}
+.jv-lines .num{text-align:right}
+.jv-sum{display:flex;gap:16px;justify-content:flex-end;font-size:12.5px;font-variant-numeric:tabular-nums;padding-top:6px}
+.jv-sum .bad{color:var(--red);font-weight:700}
+.jv-sum .good{color:var(--accent);font-weight:700}
+@media (max-width:600px){.jv-head{grid-template-columns:1fr}}
 .ed-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;z-index:1100;box-shadow:0 8px 20px rgba(0,0,0,.35)}
 html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{background:#fff}
 @media (max-width:600px){.ed-back{padding:0;align-items:stretch}.ed-card{width:100%;max-height:none;border-radius:0}}
@@ -226,7 +237,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div class="brand">
     <div class="logo">PY</div>
     <div>
-      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.12</span></div>
+      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.13</span></div>
       <div style="font-size:11px;color:var(--text-muted)">개인사업자 파이로 (PYRO)</div>
     </div>
   </div>
@@ -865,6 +876,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         <div class="panel-title">📑 분개 전표 원장 (pyro_journal 152건)</div>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="text" id="jvSearch" class="input" placeholder="거래처/적요/계정 검색..." onkeyup="filterJournal()">
+          <button class="btn btn-primary" onclick="jvOpen()">+ 전표</button>
           <span id="jvCountLabel" style="font-size:12px;color:var(--text-muted)">152건</span>
         </div>
       </div>
@@ -904,6 +916,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="text" id="bankSearch" class="input" placeholder="적요/거래처 검색..." onkeyup="filterBank()">
+          <button class="btn btn-primary" onclick="edOpen('bank')">+ 거래</button>
           <span id="bankCountLabel" style="font-size:12px;color:var(--text-muted)">77건</span>
         </div>
       </div>
@@ -1024,6 +1037,7 @@ var allDivPl = [];
 var allOwnerAcc = [];
 var allJournals = [];
 var allBankRows = [];
+var bankView = [];
 var allTaxInvoices = [];
 var allMetalTrends = [];
 var allVatData = [];
@@ -1230,7 +1244,7 @@ var ED = {
       { k:'in_date', l:'입고일', t:'date', req:true, def:todayKst },
       { k:'item', l:'품목', t:'text', req:true },
       { k:'source', l:'수거처', t:'text' },
-      { k:'status', l:'상태', t:'select', opts:['입고','작업중','완료'], def:'입고' },
+      { k:'status', l:'상태', t:'select', opts:['입고','작업중','작업완료'], def:'입고' },
       { k:'in_kg', l:'입고중량 (kg)', t:'number' },
       { k:'net_kg', l:'순중량 (kg)', t:'number' },
       { k:'used_kg', l:'투입중량 (kg)', t:'number' },
@@ -1311,7 +1325,152 @@ var ED = {
     reload: loadLots
   }
 };
+ED.bank = {
+  title: '통장 거래',
+  table: 'pyro_bank',
+  fields: [
+    { k:'tx_date', l:'거래일', t:'date', req:true, def:todayKst },
+    { k:'tx_kind', l:'구분', t:'text' },
+    { k:'cp_name', l:'거래처', t:'text' },
+    { k:'tx_desc', l:'적요', t:'text' },
+    { k:'in_amt', l:'입금액 (원)', t:'number', def:0 },
+    { k:'out_amt', l:'출금액 (원)', t:'number', def:0 },
+    { k:'balance', l:'잔액 (원)', t:'number' },
+    { k:'account', l:'계정과목', t:'text' },
+    { k:'div_code', l:'사업부', t:'select', opts:['','RE','MF','DS','CM','SV'] },
+    { k:'memo', l:'메모', t:'textarea' }
+  ],
+  prep: (v, o) => {
+    var i = v.in_amt != null ? v.in_amt : (o ? Number(o.in_amt) || 0 : 0);
+    var x = v.out_amt != null ? v.out_amt : (o ? Number(o.out_amt) || 0 : 0);
+    if(i < 0 || x < 0) return '금액은 0 이상';
+    if(i > 0 && x > 0) return '입금·출금 중 하나만';
+    if(!o && i === 0 && x === 0) return '입금 또는 출금 입력 필요';
+    if(v.in_amt === null) v.in_amt = 0;
+    if(v.out_amt === null) v.out_amt = 0;
+    return null;
+  },
+  save: async (v, o) => o ? sb.from('pyro_bank').update(v).eq('id', o.id) : sb.from('pyro_bank').insert(v),
+  removeLabel: '무효',
+  remove: async (o) => sb.from('pyro_bank').update({ is_void:true, status:'void' }).eq('id', o.id),
+  reload: loadBank
+};
 var edSub = { work: [], out: [] };
+
+async function loadJournal(){
+  var { data } = await sb.from('pyro_journal').select('*').order('jv_date', { ascending: false }).order('jv_no', { ascending: false });
+  if(data){
+    allJournals = data.filter(r => !r.is_void && r.status !== 'void');
+    var q = document.getElementById('jvSearch');
+    if(q && q.value.trim()) filterJournal(); else renderJournal(allJournals);
+  }
+}
+async function loadBank(){
+  var { data } = await sb.from('pyro_bank').select('*').order('tx_date', { ascending: false });
+  if(data){
+    allBankRows = data.filter(r => !r.is_void && r.status !== 'void');
+    var q = document.getElementById('bankSearch');
+    if(q && q.value.trim()) filterBank(); else renderBank(allBankRows);
+  }
+}
+
+// ── 전표 편집기 (v1.13) — 저장은 pyro_jv_save RPC 한 번(원자적) ──
+var jvState = null;
+function jvNum(s){ var n = Number(String(s == null ? '' : s).replace(/,/g, '').trim()); return isFinite(n) ? n : NaN; }
+function jvOpen(jvNo){
+  var lines = [], h = { jv_no:'', jv_date:todayKst(), div_code:'', partner:'', memo:'', evidence:'' };
+  if(jvNo){
+    lines = allJournals.filter(r => r.jv_no === jvNo);
+    if(!lines.length){ edToast('전표 없음'); return; }
+    var f = lines[0];
+    h = { jv_no:f.jv_no, jv_date:f.jv_date, div_code:f.div_code || '', partner:f.partner || '', memo:f.memo || '', evidence:f.evidence || '' };
+    lines = lines.map(r => ({ account:r.account || '', dr_amt:Number(r.dr_amt) || 0, cr_amt:Number(r.cr_amt) || 0, pl_code:r.pl_code || '' }));
+  } else {
+    lines = [{ account:'', dr_amt:'', cr_amt:'', pl_code:'' }, { account:'', dr_amt:'', cr_amt:'', pl_code:'' }];
+  }
+  jvState = { edit: !!jvNo, h: h, lines: lines };
+  edClose();
+  var hf = function(k, l, type, extra){ return '<div class="ed-f"><label for="jv_' + k + '">' + l + '</label>' + (type === 'select'
+      ? '<select class="select" id="jv_' + k + '">' + ['','RE','MF','DS','CM','SV'].map(o => '<option' + (h[k] === o ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>'
+      : '<input class="input" id="jv_' + k + '" type="' + type + '" value="' + edEsc(h[k]) + '"' + (extra || '') + '>') + '</div>'; };
+  var html = '<div class="ed-back" id="edBack" onclick="if(event.target===this)edClose()"><div class="ed-card jv-card" role="dialog" aria-modal="true">'
+    + '<div class="ed-head"><span>전표 ' + (jvNo ? '수정' : '추가') + '</span><button class="ed-x" onclick="edClose()" aria-label="닫기">×</button></div>'
+    + '<div class="ed-body"><div class="jv-head">'
+    + hf('jv_no', '전표번호', 'text', ' readonly') + hf('jv_date', '일자 *', 'date') + hf('div_code', '사업부', 'select')
+    + hf('partner', '거래처', 'text') + hf('evidence', '증빙', 'text') + hf('memo', '적요', 'text')
+    + '</div><div class="table-wrap"><table class="jv-lines"><thead><tr><th>계정과목 *</th><th style="text-align:right">차변</th><th style="text-align:right">대변</th><th>손익코드</th><th></th></tr></thead><tbody id="jvLines"></tbody></table></div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center"><button class="btn btn-ghost btn-xs" onclick="jvAddLine()">+ 줄</button><div class="jv-sum" id="jvSum"></div></div>'
+    + '<div class="ed-err" id="edErr"></div></div>'
+    + '<div class="ed-foot">' + (jvNo ? '<button class="btn btn-danger" id="edDel" onclick="jvDelete()">무효</button>' : '')
+    + '<span class="sp"></span><button class="btn btn-ghost" onclick="edClose()">취소</button><button class="btn btn-primary" id="edSave" onclick="jvSave()">저장</button></div>'
+    + '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.addEventListener('keydown', edKeyEsc);
+  jvRender();
+}
+function edKeyEsc(e){ if(e.key === 'Escape'){ edClose(); document.removeEventListener('keydown', edKeyEsc); } }
+function jvRender(){
+  var tb = document.getElementById('jvLines'); if(!tb) return;
+  tb.innerHTML = jvState.lines.map(function(l, i){
+    return '<tr><td><input class="input" value="' + edEsc(l.account) + '" oninput="jvSet(' + i + ',\'account\',this.value)"></td>'
+      + '<td><input class="input num" inputmode="decimal" value="' + edEsc(l.dr_amt === 0 ? '' : l.dr_amt) + '" oninput="jvSet(' + i + ',\'dr_amt\',this.value)"></td>'
+      + '<td><input class="input num" inputmode="decimal" value="' + edEsc(l.cr_amt === 0 ? '' : l.cr_amt) + '" oninput="jvSet(' + i + ',\'cr_amt\',this.value)"></td>'
+      + '<td><input class="input" value="' + edEsc(l.pl_code) + '" oninput="jvSet(' + i + ',\'pl_code\',this.value)"></td>'
+      + '<td>' + (jvState.lines.length > 2 ? '<button class="ed-x" onclick="jvDelLine(' + i + ')" aria-label="줄 삭제">×</button>' : '') + '</td></tr>';
+  }).join('');
+  jvSum();
+}
+function jvSet(i, k, v){ jvState.lines[i][k] = v; if(k !== 'account' && k !== 'pl_code') jvSum(); }
+function jvAddLine(){ jvState.lines.push({ account:'', dr_amt:'', cr_amt:'', pl_code:'' }); jvRender(); }
+function jvDelLine(i){ jvState.lines.splice(i, 1); jvRender(); }
+function jvTotals(){
+  var dr = 0, cr = 0, bad = false;
+  jvState.lines.forEach(function(l){
+    var d = l.dr_amt === '' ? 0 : jvNum(l.dr_amt), c = l.cr_amt === '' ? 0 : jvNum(l.cr_amt);
+    if(isNaN(d) || isNaN(c) || d < 0 || c < 0) bad = true; else { dr += d; cr += c; }
+  });
+  return { dr: Math.round(dr * 100) / 100, cr: Math.round(cr * 100) / 100, bad: bad };
+}
+function jvSum(){
+  var t = jvTotals(), diff = Math.round((t.dr - t.cr) * 100) / 100, ok = !t.bad && diff === 0 && t.dr > 0;
+  document.getElementById('jvSum').innerHTML = '<span>차변 ' + fmt(t.dr) + '</span><span>대변 ' + fmt(t.cr) + '</span>'
+    + '<span class="' + (ok ? 'good' : 'bad') + '">' + (t.bad ? '금액 확인' : (diff === 0 ? '일치' : '차이 ' + fmt(diff))) + '</span>';
+  var s = document.getElementById('edSave'); if(s) s.disabled = !ok;
+}
+async function jvSave(){
+  var err = document.getElementById('edErr');
+  var g = function(k){ return document.getElementById('jv_' + k).value.trim(); };
+  if(!g('jv_date')){ err.textContent = '일자 입력 필요'; return; }
+  var lines = [];
+  for(var i = 0; i < jvState.lines.length; i++){
+    var l = jvState.lines[i], d = l.dr_amt === '' ? 0 : jvNum(l.dr_amt), c = l.cr_amt === '' ? 0 : jvNum(l.cr_amt);
+    if(!String(l.account).trim() && !d && !c) continue;
+    if(!String(l.account).trim()){ err.textContent = (i + 1) + '번째 줄 계정과목 입력 필요'; return; }
+    if(d && c){ err.textContent = (i + 1) + '번째 줄은 차변·대변 중 하나만'; return; }
+    if(!d && !c){ err.textContent = (i + 1) + '번째 줄 금액 입력 필요'; return; }
+    lines.push({ account:String(l.account).trim(), dr_amt:d, cr_amt:c, pl_code:String(l.pl_code || '').trim() || null });
+  }
+  if(lines.length < 2){ err.textContent = '2줄 이상 필요'; return; }
+  var p = { jv_no:g('jv_no') || null, jv_date:g('jv_date'), div_code:g('div_code') || null, partner:g('partner') || null, memo:g('memo') || null, evidence:g('evidence') || null, lines:lines };
+  edBusy(true); err.textContent = '';
+  var res = await sb.rpc('pyro_jv_save', { p: p });
+  edBusy(false);
+  if(res.error){ err.textContent = '저장 실패: ' + res.error.message; return; }
+  if(res.data && res.data.ok === false){ err.textContent = '저장 실패: ' + (res.data.error || ''); return; }
+  edClose(); edToast('저장됨 ' + ((res.data && res.data.jv_no) || ''));
+  await loadJournal();
+}
+async function jvDelete(){
+  var b = document.getElementById('edDel');
+  if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = '한 번 더 누르면 무효'; return; }
+  edBusy(true);
+  var res = await sb.rpc('pyro_jv_delete', { p_jv_no: jvState.h.jv_no });
+  edBusy(false);
+  var e = res.error ? res.error.message : (res.data && res.data.ok === false ? (res.data.error || '') : '');
+  if(e){ document.getElementById('edErr').textContent = '무효 처리 실패: ' + e; return; }
+  edClose(); edToast('무효 처리됨');
+  await loadJournal();
+}
 var edState = null;
 function edEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 async function edOpen(kind, row, preset){
@@ -1347,7 +1506,7 @@ async function edOpen(kind, row, preset){
       }).join('')
     + '<div id="edAfter"></div><div class="ed-err" id="edErr"></div></div>'
     + '<div class="ed-foot">'
-    + (isEdit && cfg.remove ? '<button class="btn btn-danger" id="edDel" onclick="edDelete()">삭제</button>' : '')
+    + (isEdit && cfg.remove ? '<button class="btn btn-danger" id="edDel" onclick="edDelete()">' + (cfg.removeLabel || '삭제') + '</button>' : '')
     + '<span class="sp"></span><button class="btn btn-ghost" onclick="edClose()">취소</button>'
     + '<button class="btn btn-primary" id="edSave" onclick="edSave()">저장</button></div>'
     + '</div></div>';
@@ -1367,6 +1526,7 @@ function edKey(e){
 function edClose(){
   var b = document.getElementById('edBack'); if(b) b.remove();
   document.removeEventListener('keydown', edKey);
+  document.removeEventListener('keydown', edKeyEsc);
 }
 function edToast(msg){
   var d = document.createElement('div'); d.className = 'ed-toast'; d.textContent = msg;
@@ -1407,13 +1567,13 @@ async function edSave(){
 }
 async function edDelete(){
   var b = document.getElementById('edDel');
-  if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = '한 번 더 누르면 삭제'; return; }
-  var cfg = edState.cfg;
+  var cfg = edState.cfg, lbl = cfg.removeLabel || '삭제';
+  if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = '한 번 더 누르면 ' + lbl; return; }
   edBusy(true);
   var res = await cfg.remove(edState.orig);
   edBusy(false);
-  if(res && res.error){ document.getElementById('edErr').textContent = '삭제 실패: ' + res.error.message; return; }
-  edClose(); edToast('삭제됨');
+  if(res && res.error){ document.getElementById('edErr').textContent = lbl + ' 실패: ' + res.error.message; return; }
+  edClose(); edToast(lbl === '삭제' ? '삭제됨' : lbl + ' 처리됨');
   if(cfg.reload) await cfg.reload();
 }
 
@@ -1487,18 +1647,10 @@ async function loadAllData(){
     }
 
     // 6. 분개 전표 (pyro_journal)
-    var { data: jvData } = await sb.from('pyro_journal').select('*').order('jv_date', { ascending: false });
-    if(jvData){
-      allJournals = jvData;
-      renderJournal(allJournals);
-    }
+    await loadJournal();
 
     // 7. 통장 거래 (pyro_bank)
-    var { data: bData } = await sb.from('pyro_bank').select('*').order('tx_date', { ascending: false });
-    if(bData){
-      allBankRows = bData;
-      renderBank(allBankRows);
-    }
+    await loadBank();
 
     // 8. 세금계산서 (pyro_tax_invoices)
     var { data: tiData } = await sb.from('pyro_tax_invoices').select('*').order('write_date', { ascending: false });
@@ -1649,7 +1801,7 @@ function renderJournal(rows){
     return;
   }
   tbody.innerHTML = rows.map(r => `
-    <tr>
+    <tr class="ed-row" onclick="jvOpen('${edEsc(r.jv_no).replace(/'/g, '&#39;')}')">
       <td style="font-size:11px;color:var(--text-muted)">${r.jv_no || '-'}</td>
       <td style="font-variant-numeric:tabular-nums">${r.jv_date || '-'}</td>
       <td><span class="badge">${r.div_code || '-'}</span></td>
@@ -1680,8 +1832,9 @@ function renderBank(rows){
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px">통장 내역이 없습니다.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(r => `
-    <tr>
+  bankView = rows;
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr class="ed-row" onclick="edOpen('bank', bankView[${i}])">
       <td style="font-variant-numeric:tabular-nums">${r.tx_date || '-'}</td>
       <td><span class="tag ${Number(r.in_amt) > 0 ? 'tag-tax-ok' : 'tag-tax-warn'}">${r.tx_kind || (Number(r.in_amt) > 0 ? '입금' : '출금')}</span></td>
       <td><strong>${r.cp_name || '-'}</strong></td>
