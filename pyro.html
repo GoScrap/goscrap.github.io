@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.13 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.14 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -237,7 +237,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div class="brand">
     <div class="logo">PY</div>
     <div>
-      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.13</span></div>
+      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.14</span></div>
       <div style="font-size:11px;color:var(--text-muted)">개인사업자 파이로 (PYRO)</div>
     </div>
   </div>
@@ -956,6 +956,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
             <option value="매입">매입만</option>
           </select>
           <input type="text" id="tiSearch" class="input" placeholder="거래처/품목 검색..." onkeyup="filterTaxInvoices()">
+          <button class="btn btn-primary" onclick="edOpen('ti')">+ 계산서</button>
         </div>
       </div>
       <div class="table-wrap" style="max-height:600px;overflow-y:auto">
@@ -1039,6 +1040,7 @@ var allJournals = [];
 var allBankRows = [];
 var bankView = [];
 var allTaxInvoices = [];
+var tiView = [];
 var allMetalTrends = [];
 var allVatData = [];
 
@@ -1357,6 +1359,64 @@ ED.bank = {
 };
 var edSub = { work: [], out: [] };
 
+async function loadTaxInvoices(){
+  var { data } = await sb.from('pyro_tax_invoices').select('*').order('write_date', { ascending: false });
+  if(data){
+    allTaxInvoices = data.filter(r => !r.is_void && r.status !== 'void');
+    var q = document.getElementById('tiSearch'), f = document.getElementById('tiFlowFilter');
+    if((q && q.value.trim()) || (f && f.value)) filterTaxInvoices(); else renderTaxInvoices(allTaxInvoices);
+    if(typeof allVatData !== 'undefined' && allVatData.length) renderVatCard(allVatData);
+  }
+}
+ED.ti = {
+  title: '세금계산서',
+  table: 'pyro_tax_invoices',
+  fields: [
+    { k:'flow', l:'구분', t:'select', opts:['매출','매입'], req:true, def:'매출' },
+    { k:'write_date', l:'작성일자', t:'date', req:true, def:todayKst },
+    { k:'issue_date', l:'발급일자', t:'date' },
+    { k:'supplier', l:'공급자', t:'text', req:true },
+    { k:'buyer', l:'공급받는자', t:'text', req:true },
+    { k:'item', l:'품목', t:'text' },
+    { k:'supply_amt', l:'공급가액 (원)', t:'number', req:true },
+    { k:'vat_amt', l:'세액 (원)', t:'number' },
+    { k:'total_amt', l:'합계 (원)', t:'number' },
+    { k:'ti_type', l:'유형', t:'select', opts:['일반','일반(수정)','영세율','면세'], def:'일반' },
+    { k:'div_code', l:'사업부', t:'select', opts:['','RE','MF','DS','CM','SV'] },
+    { k:'account', l:'계정과목', t:'text' },
+    { k:'settle_status', l:'정산상태', t:'text' },
+    { k:'approval_no', l:'승인번호', t:'text' }
+  ],
+  onOpen: () => {
+    var s = document.getElementById('ed_supply_amt'), v = document.getElementById('ed_vat_amt'), tt = document.getElementById('ed_total_amt');
+    var num = x => { var n = Number(String(x).replace(/,/g, '')); return isFinite(n) ? n : null; };
+    var auto = { vat: !v.value, tot: !tt.value };
+    v.addEventListener('input', () => { auto.vat = false; });
+    tt.addEventListener('input', () => { auto.tot = false; });
+    var sync = () => {
+      var sv = num(s.value); if(sv === null || s.value.trim() === '') return;
+      var type = document.getElementById('ed_ti_type').value;
+      if(auto.vat) v.value = (type === '영세율' || type === '면세') ? 0 : Math.round(sv * 0.1);
+      if(auto.tot){ var vv = num(v.value) || 0; tt.value = sv + vv; }
+    };
+    s.addEventListener('input', sync); v.addEventListener('input', () => { if(auto.tot){ var sv = num(s.value) || 0, vv = num(v.value) || 0; tt.value = sv + vv; } });
+    document.getElementById('ed_ti_type').addEventListener('change', sync);
+  },
+  prep: (v, o) => {
+    var g = k => v[k] !== undefined ? v[k] : (o ? o[k] : null);
+    var s = Number(g('supply_amt')) || 0, x = Number(g('vat_amt')) || 0, t = g('total_amt');
+    if(t != null && Math.round(Number(t)) !== Math.round(s + x)) return '합계가 공급가액 + 세액과 다름';
+    if(v.vat_amt === null) v.vat_amt = 0;
+    if(v.total_amt === null) v.total_amt = s + x;
+    if(!o) v.source = 'manual';
+    return null;
+  },
+  save: async (v, o) => o ? sb.from('pyro_tax_invoices').update(v).eq('id', o.id) : sb.from('pyro_tax_invoices').insert(v),
+  removeLabel: '무효',
+  remove: async (o) => sb.from('pyro_tax_invoices').update({ is_void:true, status:'void' }).eq('id', o.id),
+  reload: loadTaxInvoices
+};
+
 async function loadJournal(){
   var { data } = await sb.from('pyro_journal').select('*').order('jv_date', { ascending: false }).order('jv_no', { ascending: false });
   if(data){
@@ -1515,6 +1575,7 @@ async function edOpen(kind, row, preset){
   document.addEventListener('keydown', edKey);
   var first = document.querySelector('#edBack .input:not([readonly]), #edBack select:not([disabled])');
   if(first) first.focus();
+  if(cfg.onOpen) cfg.onOpen(row);
   if(isEdit && cfg.after){
     cfg.after(row).then(function(h){ var a = document.getElementById('edAfter'); if(a && edState && edState.orig === row) a.innerHTML = h; });
   }
@@ -1653,11 +1714,7 @@ async function loadAllData(){
     await loadBank();
 
     // 8. 세금계산서 (pyro_tax_invoices)
-    var { data: tiData } = await sb.from('pyro_tax_invoices').select('*').order('write_date', { ascending: false });
-    if(tiData){
-      allTaxInvoices = tiData;
-      renderTaxInvoices(allTaxInvoices);
-    }
+    await loadTaxInvoices();
 
     // 9. 금속 시세 추이 (WO-18: pyro_metal_price_trend)
     var { data: trData } = await sb.from('pyro_metal_price_trend').select('*').order('ym', { ascending: false });
@@ -1862,8 +1919,9 @@ function renderTaxInvoices(rows){
     tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px">세금계산서 내역이 없습니다.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(r => `
-    <tr>
+  tiView = rows;
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr class="ed-row" onclick="edOpen('ti', tiView[${i}])">
       <td style="font-variant-numeric:tabular-nums">${r.write_date || '-'}</td>
       <td><span class="tag ${r.flow === '매출' ? 'tag-tax-ok' : 'tag-tax-warn'}">${r.flow}</span></td>
       <td>${r.supplier || '-'}</td>
