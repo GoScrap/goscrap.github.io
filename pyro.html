@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.19 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.20 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -104,7 +104,11 @@ html[data-theme="light"] #sb .tab-item:hover{background:#f1f5f9}
 .tab-item.active{color:var(--accent);border-bottom-color:var(--accent)}
 
 /* Container */
-.container{max-width:1440px;margin:0 auto;padding:20px}
+.container{max-width:none;margin:0;padding:20px 24px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr);column-gap:20px;align-items:start}
+.pair>.panel{min-width:0}
+@media (min-width:1500px){.pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media (min-width:2200px){.mf-top{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 .tab-pane{display:none}
 .tab-pane.active{display:block}
 
@@ -274,7 +278,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 
 <div id="shell">
 <aside id="sb">
-  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.19</span><small>개인사업자 파이로</small></div></div>
+  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.20</span><small>개인사업자 파이로</small></div></div>
   <nav class="sb-nav" id="sbNav">
     <div class="sb-grp">고물상 · 비철</div>
     <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">🪙</span><span class="lb">비철 시세 관제</span></div>
@@ -369,6 +373,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     </div>
     </div>
 
+    <div class="pair">
     <!-- 오늘 시세판 전체 테이블 -->
     <div class="panel">
       <div class="panel-head">
@@ -408,6 +413,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
           <tbody id="ratioRows"><tr><td colspan="8" style="text-align:center;padding:30px">-</td></tr></tbody>
         </table>
       </div>
+    </div>
     </div>
 
     <!-- 세무 주의보 배너 (Claude 지침 반영) -->
@@ -738,6 +744,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
       </div>
     </div>
 
+    <div class="pair">
     <!-- 사업부별 올해 실적 (pyro_div_pl 집계) -->
     <div class="panel">
       <div class="panel-head">
@@ -758,6 +765,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
           <tbody id="divtRows"><tr><td colspan="9" style="text-align:center;padding:30px">-</td></tr></tbody>
         </table>
       </div>
+    </div>
     </div>
 
     <!-- WO-25: 부가세 실원장 vs 시트 대조 및 매입세액 환급 분석 카드 -->
@@ -874,6 +882,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
       </div>
     </div>
 
+    <div class="pair">
     <!-- 월별 사업부 손익 집계표 (pyro_div_pl 직결) -->
     <div class="panel">
       <div class="panel-head">
@@ -942,6 +951,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   </div>
 
@@ -1636,7 +1646,7 @@ async function loadFuel(){
   var ok = (data || []).filter(r => r.price_krw != null && r.src !== 'error');
   var d = ok.find(r => r.product === '경유'), g = ok.find(r => r.product === '휘발유');
   fuelLatest = { diesel: d ? Number(d.price_krw) : null, gas: g ? Number(g.price_krw) : null, date: d ? d.price_date : (g ? g.price_date : null) };
-  set('fuelDiesel', d ? fmt(d.price_krw) : '-'); set('fuelGas', g ? fmt(g.price_krw) : '-');
+  set('fuelDiesel', d ? fmt(Math.round(d.price_krw)) : '-'); set('fuelGas', g ? fmt(Math.round(g.price_krw)) : '-');
   var err = (data || []).find(r => r.src === 'error');
   set('fuelDate', fuelLatest.date ? fuelLatest.date + (d && d.src ? ' · ' + d.src : '') : (err ? '수집 오류' : ''));
   freightRef();
