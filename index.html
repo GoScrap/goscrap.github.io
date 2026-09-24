@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.20 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.21 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -76,7 +76,8 @@ header{background:#111827;border-bottom:1px solid var(--border);padding:10px 20p
 .sb-nav{flex:1;overflow:auto;padding:8px}
 .sb-grp{font-size:11px;color:var(--text-muted);padding:12px 10px 4px;white-space:nowrap;letter-spacing:.03em}
 #sb .tab-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border-bottom:none;font-size:13px}
-#sb .tab-item .ic{width:20px;text-align:center;flex:none}
+#sb .tab-item .ic{width:28px;text-align:center;flex:none;font-size:10.5px;font-weight:700;color:var(--text-muted)}
+#sb .tab-item.active .ic{color:var(--accent)}
 #sb .tab-item:hover{background:rgba(255,255,255,.04)}
 #sb .tab-item.active{background:var(--accent-light);color:var(--accent)}
 .sb-foot{padding:8px;border-top:1px solid var(--border)}
@@ -105,6 +106,14 @@ html[data-theme="light"] #sb .tab-item:hover{background:#f1f5f9}
 
 /* Container */
 .container{max-width:none;margin:0;padding:20px 24px}
+.pl12-lg{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted)}
+.pl12-lg i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.pl12-tbl th,.pl12-tbl td{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pl12-tbl th:first-child,.pl12-tbl td:first-child{text-align:left;position:sticky;left:0;z-index:1}
+.pl12-tbl td:first-child{background:var(--panel)}
+.pl12-tbl tr.pl12-op td{font-weight:700}
+.pl12-tbl td.pl12-sum,.pl12-tbl th.pl12-sum{border-left:1px solid var(--border);font-weight:700}
+#pl12Chart svg{display:block;width:100%;height:220px}
 .pair{display:grid;grid-template-columns:minmax(0,1fr);column-gap:20px;align-items:start}
 .pair>.panel{min-width:0}
 @media (min-width:1500px){.pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
@@ -278,23 +287,23 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 
 <div id="shell">
 <aside id="sb">
-  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.20</span><small>개인사업자 파이로</small></div></div>
+  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.21</span><small>개인사업자 파이로</small></div></div>
   <nav class="sb-nav" id="sbNav">
     <div class="sb-grp">고물상 · 비철</div>
-    <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">🪙</span><span class="lb">비철 시세 관제</span></div>
-    <div class="tab-item" data-tab="mf-guide" onclick="switchTab('mf-guide')"><span class="ic">🎯</span><span class="lb">현장 매입 견적기</span></div>
-    <div class="tab-item" data-tab="mf-lots" onclick="switchTab('mf-lots')"><span class="ic">📦</span><span class="lb">로트 진행판</span></div>
+    <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">시세</span><span class="lb">비철 시세 관제</span></div>
+    <div class="tab-item" data-tab="mf-guide" onclick="switchTab('mf-guide')"><span class="ic">견적</span><span class="lb">현장 매입 견적기</span></div>
+    <div class="tab-item" data-tab="mf-lots" onclick="switchTab('mf-lots')"><span class="ic">로트</span><span class="lb">로트 진행판</span></div>
     <div class="sb-grp">회계 · 자금</div>
-    <div class="tab-item" data-tab="div-pl" onclick="switchTab('div-pl')"><span class="ic">📊</span><span class="lb">사업부 손익 · 자금</span></div>
-    <div class="tab-item" data-tab="journal" onclick="switchTab('journal')"><span class="ic">📑</span><span class="lb">전표 원장</span></div>
-    <div class="tab-item" data-tab="bank" onclick="switchTab('bank')"><span class="ic">🏦</span><span class="lb">통장 원장</span></div>
-    <div class="tab-item" data-tab="tax-invoices" onclick="switchTab('tax-invoices')"><span class="ic">🧾</span><span class="lb">세금계산서</span></div>
+    <div class="tab-item" data-tab="div-pl" onclick="switchTab('div-pl')"><span class="ic">손익</span><span class="lb">손익 · 자금</span></div>
+    <div class="tab-item" data-tab="journal" onclick="switchTab('journal')"><span class="ic">전표</span><span class="lb">전표 원장</span></div>
+    <div class="tab-item" data-tab="bank" onclick="switchTab('bank')"><span class="ic">통장</span><span class="lb">통장 원장</span></div>
+    <div class="tab-item" data-tab="tax-invoices" onclick="switchTab('tax-invoices')"><span class="ic">계산</span><span class="lb">세금계산서</span></div>
     <div class="sb-grp">제조 · 유통</div>
-    <div class="tab-item" data-tab="tools" onclick="switchTab('tools')"><span class="ic">🔧</span><span class="lb">공구온 · B2B</span></div>
-    <div class="tab-item" data-tab="cost" onclick="switchTab('cost')"><span class="ic">🏭</span><span class="lb">튜브 · 사출 원가</span></div>
-    <div class="tab-item" data-tab="vendor" onclick="switchTab('vendor')"><span class="ic">📋</span><span class="lb">협력 거래처 단가표</span></div>
+    <div class="tab-item" data-tab="tools" onclick="switchTab('tools')"><span class="ic">공구</span><span class="lb">공구온 · B2B</span></div>
+    <div class="tab-item" data-tab="cost" onclick="switchTab('cost')"><span class="ic">원가</span><span class="lb">튜브 · 사출 원가</span></div>
+    <div class="tab-item" data-tab="vendor" onclick="switchTab('vendor')"><span class="ic">단가</span><span class="lb">협력 거래처 단가표</span></div>
     <div class="sb-grp">관리</div>
-    <div class="tab-item" data-tab="governance" onclick="switchTab('governance')"><span class="ic">🏛️</span><span class="lb">거버넌스 · 세무</span></div>
+    <div class="tab-item" data-tab="governance" onclick="switchTab('governance')"><span class="ic">세무</span><span class="lb">거버넌스 · 세무</span></div>
   </nav>
   <div class="sb-foot"><button class="nav-btn" onclick="toggleSb()" title="메뉴 접기/펴기" aria-label="메뉴 접기/펴기">⇤</button></div>
 </aside>
@@ -303,11 +312,11 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 <header>
   <div class="top-l"><button class="nav-btn mob-only" onclick="openMobSb()" aria-label="메뉴">☰</button><div class="top-ttl" id="topTitle">비철 시세 관제</div></div>
   <div class="nav-links">
-    <a href="https://bvs-erp.github.io/index.html" class="nav-btn">🌐 통합허브</a>
-    <a href="https://bvs-erp.github.io/erp.html" class="nav-btn">🔵 BVS</a>
-    <a href="https://bvs-erp.github.io/ssjg.html" class="nav-btn">🔴 SSJG</a>
-        <a href="https://bvs-erp.github.io/worker.html" target="_blank" rel="noopener noreferrer" class="nav-btn" style="border-color:rgba(59,130,246,0.5);color:#60a5fa" title="현장 근로자/리드 공수 ERP (새 탭)">👷 공수 ERP</a>
-    <button class="nav-btn" onclick="toggleTheme()" title="테마 전환 (라이트/다크)">🌓 테마</button>
+    <a href="https://bvs-erp.github.io/index.html" class="nav-btn">통합허브</a>
+    <a href="https://bvs-erp.github.io/erp.html" class="nav-btn">BVS</a>
+    <a href="https://bvs-erp.github.io/ssjg.html" class="nav-btn">SSJG</a>
+        <a href="https://bvs-erp.github.io/worker.html" target="_blank" rel="noopener noreferrer" class="nav-btn" style="border-color:rgba(59,130,246,0.5);color:#60a5fa" title="현장 근로자/리드 공수 ERP (새 탭)">공수 ERP</a>
+    <button class="nav-btn" onclick="toggleTheme()" title="테마 전환 (라이트/다크)">테마</button>
     <div id="userBadge" style="display:flex;align-items:center;gap:6px;margin-left:8px;padding-left:8px;border-left:1px solid var(--border)">
       <span id="userEmail" style="font-size:11px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis">인증 확인중</span>
       <button onclick="doLogout()" class="nav-btn" style="padding:4px 8px;font-size:11px;color:#ef4444;border-color:rgba(239,68,68,0.3)">로그아웃</button>
@@ -322,7 +331,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- LME 비철 6종 (v1.10) -->
     <div class="panel lme-panel">
       <div class="panel-head">
-        <div class="panel-title">🌐 LME 비철 시세</div>
+        <div class="panel-title">LME 비철 시세</div>
         <div style="font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums" id="lmeMeta">-</div>
       </div>
       <div class="table-wrap">
@@ -348,18 +357,18 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <div class="kpi-grid kpi-2x2">
       <div class="kpi-card green">
         <div class="kpi-label">A동 (꽈베기) 최신 시세</div>
-        <div class="kpi-val" id="kpiPriceAdong">18,000 원/kg</div>
-        <div class="kpi-sub" id="kpiPriceAdongDate">기준일: 2026-09-21 (다이렉트스크랩)</div>
+        <div class="kpi-val" id="kpiPriceAdong">-</div>
+        <div class="kpi-sub" id="kpiPriceAdongDate"></div>
       </div>
       <div class="kpi-card blue">
         <div class="kpi-label">상동 최신 시세</div>
-        <div class="kpi-val" id="kpiPriceSangdong">17,000 원/kg</div>
-        <div class="kpi-sub" id="kpiPriceSangdongDate">기준일: 2026-09-21 (상한가 산식 기준)</div>
+        <div class="kpi-val" id="kpiPriceSangdong">-</div>
+        <div class="kpi-sub" id="kpiPriceSangdongDate"></div>
       </div>
       <div class="kpi-card amber">
         <div class="kpi-label">AL 샤시 최신 시세</div>
-        <div class="kpi-val" id="kpiPriceAl">3,000 원/kg</div>
-        <div class="kpi-sub" id="kpiPriceAlDate">기준일: 2026-09-21 (알루미늄 기준)</div>
+        <div class="kpi-val" id="kpiPriceAl">-</div>
+        <div class="kpi-sub" id="kpiPriceAlDate"></div>
       </div>
       <div class="kpi-card purple">
         <div class="kpi-label">누적 실적 매출 합계</div>
@@ -377,7 +386,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 오늘 시세판 전체 테이블 -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📈 금속·스크랩 최신 시세판 (<span id="metalCount">0</span>종)</div>
+        <div class="panel-title">금속·스크랩 시세 (<span id="metalCount">0</span>종)</div>
         <div style="display:flex;gap:8px">
           <input type="text" id="metalSearch" class="input" placeholder="금속명/규격 검색..." onkeyup="filterMetals()" style="width:200px">
           <button class="btn btn-primary" onclick="edOpen('metal')">+ 추가</button>
@@ -404,7 +413,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 등급별 LME 연동 비율 (pyro_grade_lme_map) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🔗 등급별 LME 연동 비율 (<span id="ratioCount">0</span>종)</div>
+        <div class="panel-title">등급별 LME 연동 비율 (<span id="ratioCount">0</span>종)</div>
         <button class="btn btn-primary btn-xs" onclick="ratioOpen(null)">+ 연동</button>
       </div>
       <div class="table-wrap">
@@ -416,24 +425,6 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     </div>
     </div>
 
-    <!-- 세무 주의보 배너 (Claude 지침 반영) -->
-    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:16px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span style="font-size:20px">⚠️</span>
-        <h4 style="font-size:14px;font-weight:700;color:#fca5a5;margin:0">고물상(MF) 세무·특례 주의보 (조특법 제106조의9 & 부가세법 제108조)</h4>
-      </div>
-      <p style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:8px">
-        1. <b>구리·스크랩 매입자 납부특례 의무</b>: 동(구리), 황동(신주) 등 스크랩 사업자 간 거래 시 반드시 <b>스크랩 전용계좌</b>로 결제해야 부가세 매입세액이 인정됩니다.<br>
-        2. <b>개인 무증빙 매입 경비 부인 위험</b>: 세금계산서 없는 개인(수거처) 매입은 <b>신분증 사본·계좌이체증·매입대장</b>을 필수로 확보해야 종합소득세 필요경비로 인정받을 수 있습니다.
-      </p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px">
-        <span class="tag tag-tax-warn">구리(동): 매입자납부특례 [필수]</span>
-        <span class="tag tag-tax-warn">황동(신주): 매입자납부특례 [필수]</span>
-        <span class="tag tag-tax-ok">폐전선: 재활용폐자원 10/110 공제 [적용]</span>
-        <span class="tag tag-tax-ok">알루미늄(AL): 일반 과세 [적용]</span>
-      </div>
-    </div>
-
   </div>
 
   <!-- TAB 2: 현장 매입 견적기 (67종 100% 일치 공식) -->
@@ -441,7 +432,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <div class="panel" style="border-left:4px solid var(--accent);margin-bottom:20px">
       <div class="panel-head" style="background:rgba(16,185,129,0.05)">
         <div class="panel-title">
-          <span>🎯 현장 매입 견적 계산기 (실시간 규격 매입 상한가 산출)</span>
+          <span>현장 매입 견적</span>
         </div>
       </div>
       <div style="padding:20px">
@@ -491,7 +482,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
             <div id="calcTotalBreak" style="font-size:11px;color:var(--text-muted);margin-top:2px">총 0 원</div>
           </div>
           <div style="border-left:2px solid var(--accent);padding-left:14px">
-            <div style="font-size:11px;color:var(--green);font-weight:700" id="calcGuideLbl">★ 현장 권장 매입가</div>
+            <div style="font-size:11px;color:var(--green);font-weight:700" id="calcGuideLbl">권장 매입가</div>
             <div id="calcUnitGuide" style="font-size:22px;font-weight:700;color:var(--green)">0 원/kg</div>
             <div id="calcTotalGuide" style="font-size:12px;color:var(--text);font-weight:700;margin-top:2px">총 권장매입금액: 0 원</div>
           </div>
@@ -502,7 +493,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 규격별 매입 상한가 마스터 (pyro_mf_guide_master) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📋 전선·비철 규격별 매입 상한가 마스터 (<span id="guideCount">0</span>종)</div>
+        <div class="panel-title">규격별 매입 상한가 (<span id="guideCount">0</span>종)</div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-primary btn-xs" onclick="guideOpen(null)">+ 품목</button>
           <input type="text" id="guideSearch" class="input" placeholder="규격/분류/도체 검색..." onkeyup="filterGuide()" style="width:220px">
@@ -520,7 +511,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
               <th>출처</th>
               <th style="text-align:right">회수가치</th>
               <th style="text-align:right">손익분기매입가</th>
-              <th style="text-align:right;color:var(--green)">권장매입가 (마진25%)</th>
+              <th style="text-align:right;color:var(--green)">권장매입가</th>
               <th>용도/메모</th>
             </tr>
           </thead>
@@ -536,7 +527,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div id="tab-mf-lots" class="tab-pane">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📦 고물상(MF) 로트 진행 원장 (총 <span id="lotCount">0</span>건)</div>
+        <div class="panel-title">로트 진행 (총 <span id="lotCount">0</span>건)</div>
         <div style="display:flex;gap:8px">
           <input type="text" id="lotSearch" class="input" placeholder="입고ID/품목/수거처 검색..." onkeyup="filterLots()" style="width:220px">
           <button class="btn btn-primary" onclick="edOpen('lot')">+ 입고</button>
@@ -572,7 +563,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div id="tab-tools" class="tab-pane">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🔧 공구온 & 다모아공구 베스트 랭킹 카탈로그</div>
+        <div class="panel-title">공구온 · 다모아공구 상품</div>
         <div style="display:flex;gap:10px">
           <input type="text" id="toolSearch" class="input" placeholder="품명/브랜드/규격 검색..." onkeyup="filterTools()" style="width:240px">
           <button class="btn btn-primary" onclick="edOpen('tool')">+ 상품</button>
@@ -588,8 +579,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div id="tab-cost" class="tab-pane">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🏭 단위당 튜브 원가 정밀 자동 산출기 (사장님 Order 공식)</div>
-        <span class="badge">25 파이로 제조 로직</span>
+        <div class="panel-title">튜브 원가 산출</div>
       </div>
       <div style="padding:20px">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px">
@@ -644,7 +634,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
             <div style="font-size:18px;font-weight:700" id="costBox">15.0 원</div>
           </div>
           <div style="border-left:2px solid var(--accent);padding-left:16px">
-            <div style="font-size:12px;color:var(--accent);font-weight:700">★ 총 단위당 공급 원가</div>
+            <div style="font-size:12px;color:var(--accent);font-weight:700">단위당 공급 원가</div>
             <div style="font-size:24px;font-weight:700;color:var(--accent)" id="costTotal">121.5 원</div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="costTotalSum">총 발주액: 1,215,000 원</div>
           </div>
@@ -654,7 +644,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     </div>
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🗂️ 견적 이력</div>
+        <div class="panel-title">견적 이력</div>
         <input type="text" id="cqSearch" class="input" placeholder="고객사/품목 검색..." onkeyup="filterCq()" style="width:200px">
       </div>
       <div class="table-wrap">
@@ -670,7 +660,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div id="tab-vendor" class="tab-pane">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📋 튜브·캡 사출 협력업체별 규격 단가표</div>
+        <div class="panel-title">협력업체 규격 단가표</div>
         <div style="display:flex;gap:8px"><input type="text" id="vendorSearch" class="input" placeholder="협력사/품목 검색..." onkeyup="filterVendors()" style="width:200px"><button class="btn btn-primary" onclick="edOpen('vendor')">+ 단가</button></div>
       </div>
       <div class="table-wrap">
@@ -696,23 +686,39 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   
   <!-- TAB: 사업부 손익 (P&L) & 사업주 계정 관제 (WO-11, WO-12) -->
   <div id="tab-div-pl" class="tab-pane">
-    <!-- WO-45: 카드 사용내역 미적재 경고 배너 -->
-    <div class="banner-amber" style="border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-      <span style="font-size:20px;flex-shrink:0">⚠️</span>
-      <div style="font-size:13px;font-weight:700;line-height:1.5">
-        ⚠️ 카드 사용내역 미적재 — 판관비가 실제보다 작게 잡혀 영업이익이 과대 표시됩니다. (2026년 판관비 전표 2건 858,398원 / 카드결제 출금 14,873,333원은 자금거래로만 인식)
+    <div class="panel" id="pl12Panel">
+      <div class="panel-head">
+        <div class="panel-title">최근 12개월 손익 <span id="pl12Range" style="font-weight:400;color:var(--text-muted);font-size:12px"></span></div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <span class="pl12-lg"><i style="background:var(--blue)"></i>매출</span><span class="pl12-lg"><i style="background:var(--green)"></i>영업이익</span>
+          <select id="pl12Div" class="select" onchange="renderPl12()">
+            <option value="">사업부 전체</option>
+            <option value="MF">MF 제조·스크랩</option>
+            <option value="RE">RE 부동산임대</option>
+            <option value="DS">DS 도소매·공구온</option>
+            <option value="SV">SV 서비스</option>
+            <option value="CM">CM 공통·관리</option>
+          </select>
+        </div>
+      </div>
+      <div id="pl12Chart" style="padding:12px 16px 0"></div>
+      <div class="table-wrap">
+        <table class="pl12-tbl">
+          <thead id="pl12Head"></thead>
+          <tbody id="pl12Rows"><tr><td style="text-align:center;padding:30px">-</td></tr></tbody>
+        </table>
       </div>
     </div>
 
-    <!-- WO-12: 사업주 인출/출자 현황 카드 & 초과인출 경고 -->
+    <!-- WO-12: 사업주 인출/출자 현황 카드 -->
     <div class="kpi-grid">
       <div class="kpi-card green">
-        <div class="kpi-label">출자금 누적 (개인 ➡️ 사업)</div>
+        <div class="kpi-label">출자금 누적</div>
         <div class="kpi-val" id="kpiInvestIn">-</div>
         <div class="kpi-sub" id="kpiInvestInSub"></div>
       </div>
       <div class="kpi-card amber">
-        <div class="kpi-label">인출금 누적 (사업 ➡️ 개인)</div>
+        <div class="kpi-label">인출금 누적</div>
         <div class="kpi-val" id="kpiDrawOut">-</div>
         <div class="kpi-sub" id="kpiDrawOutSub"></div>
       </div>
@@ -722,25 +728,9 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         <div class="kpi-sub" id="kpiNetCumSub" style="font-weight:700"></div>
       </div>
       <div class="kpi-card purple">
-        <div class="kpi-label">지급이자 누적 (계정 9200)</div>
+        <div class="kpi-label">지급이자 누적</div>
         <div class="kpi-val" id="kpiInterestExp">-</div>
         <div class="kpi-sub" id="kpiInterestExpSub"></div>
-      </div>
-    </div>
-
-    <!-- Tax-Risk Guard: 소득세법 시행령 §61①(2) 초과인출금 경고 배너 -->
-    <div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:16px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span style="font-size:22px">⚠️</span>
-        <h4 style="font-size:14px;font-weight:700;color:#fca5a5;margin:0">Tax-Risk Guard: 초과인출금 지급이자 필요경비 불산입 경고 (소득세법 시행령 제61조 제1항 제2호)</h4>
-      </div>
-      <p style="font-size:12.5px;color:#e2e8f0;line-height:1.6;margin-bottom:8px">
-        현재 파이로 사업주 계정은 <b id="trgNet">-</b> 상태입니다.<br>
-        개인사업자가 사업용 자산가액을 초과하여 자금을 인출한 상태에서 차입금 지급이자(<span id="trgInt">-</span>)가 발생하면, 
-        <b>초과인출금 적수 비율에 상당하는 지급이자는 종합소득세 신고 시 필요경비에 불산입</b>되어 세부담이 증가합니다.
-      </p>
-      <div style="font-size:11.5px;color:#94a3b8;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:6px">
-        📐 <b>법정 불산입 산식</b>: 지급이자 × (초과인출금 적수 ÷ 차입금 적수) ｜ <b>권고 조치</b>: 사업자 계좌로 출자금 재입금 또는 차입금 조기 상환 검토
       </div>
     </div>
 
@@ -748,7 +738,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 사업부별 올해 실적 (pyro_div_pl 집계) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🏢 사업부별 실적 (<span id="divSumYr">-</span>년 누계)</div>
+        <div class="panel-title">사업부별 실적 (<span id="divSumYr">-</span>년 누계)</div>
       </div>
       <div id="divSummary" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px"></div>
     </div>
@@ -756,7 +746,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 사업부 월 목표 (pyro_div_targets) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🎯 사업부 월 목표 대비 실적</div>
+        <div class="panel-title">사업부 월 목표 대비 실적</div>
         <button class="btn btn-primary btn-xs" onclick="divtOpen(null)">+ 목표</button>
       </div>
       <div class="table-wrap">
@@ -768,67 +758,10 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     </div>
     </div>
 
-    <!-- WO-25: 부가세 실원장 vs 시트 대조 및 매입세액 환급 분석 카드 -->
-    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:10px;padding:16px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:20px">🚨</span>
-          <div>
-            <h4 style="font-size:14px;font-weight:700;color:#fca5a5;margin:0">[세무 환급 긴급 경보] 세금계산서 실원장 vs 시트 매입세액 대사 (WO-25)</h4>
-            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">현재 시트(FI부가세) 매입세액 0원 표기 ↔ 실제 세금계산서 수취 원장(pyro_tax_invoices) 매입세액 비교</div>
-          </div>
-        </div>
-        <span class="tag tag-tax-warn" style="font-size:11.5px;padding:4px 8px">⚠️ 경정청구 최대 4,200만 원 환급 기회</span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:8px">
-        <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;padding:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:700;color:var(--accent);font-size:13px">🏛️ 2025년 매입세액 (공장 건물 취득 등)</span>
-            <span class="tag tag-tax-warn" style="font-size:10.5px">환급 누락</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-            <span style="color:var(--text-muted)">• 시트 신고 매입세액:</span>
-            <b>0 원</b>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-            <span style="color:#fca5a5;font-weight:700">• 세금계산서 실원장:</span>
-            <b style="color:#fca5a5;font-size:13px" id="vatTi2025">42,220,000 원 (3건)</b>
-          </div>
-          <div style="font-size:11px;color:#93c5fd;line-height:1.4;background:rgba(59,130,246,0.1);padding:6px 8px;border-radius:4px;border:1px solid rgba(59,130,246,0.2);margin-top:6px">
-            └ 2025-09 쏠테크 공장건물 매입세액 4,200만 + 법무사 7만 + 중개 15만<br>
-            <b>👉 대표 조치: 세무사 확인 후 부가세 경정청구 시 최대 4,200만 원 환급 가능</b>
-          </div>
-        </div>
-
-        <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;padding:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:700;color:var(--accent);font-size:13px">📦 2026년 매입세액 (통관·물류 등)</span>
-            <span class="tag tag-tax-ok" style="font-size:10.5px">공제 대상</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-            <span style="color:var(--text-muted)">• 시트 신고 매입세액:</span>
-            <b>0 원 (임가공 명목)</b>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-            <span style="color:#86efac;font-weight:700">• 세금계산서 실원장:</span>
-            <b style="color:#86efac;font-size:13px" id="vatTi2026">471,900 원 (14건)</b>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);line-height:1.4;background:rgba(255,255,255,0.04);padding:6px 8px;border-radius:4px;margin-top:6px">
-            └ 페덱스·유니패스·우체국 등 수입/통관 부대비용 세금계산서 수취분<br>
-            <b>👉 조치: 수탁임가공이라도 부대경비 매입세액은 합법적 공제 반영 필요</b>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- WO-20: 부가세 현황 카드 (pyro_vat 직결) -->
     <div class="panel">
       <div class="panel-head">
-        <div>
-          <div class="panel-title">📑 부가가치세 납부 예상 및 매입세액 공제 현황 (public.pyro_vat 직결)</div>
-          <div style="font-size:11px;color:var(--text-muted)">대표님 확정: 고물상(MF) 전건은 수탁 임가공비 수취 구조임 (원자재 매입 0원 정상)</div>
-        </div>
-        <span class="tag tag-tax-ok" style="font-size:11.5px">🟢 수탁임가공(용역) 확정 (매입 0원 정상)</span>
+        <div class="panel-title">부가가치세 현황</div>
       </div>
       <div class="table-wrap">
         <table>
@@ -839,7 +772,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
               <th style="text-align:right">상반기 (1기)</th>
               <th style="text-align:right">하반기 (2기)</th>
               <th style="text-align:right">연간 합계</th>
-              <th>세무 주의 메모</th>
+              <th>메모</th>
             </tr>
           </thead>
           <tbody id="vatTableRows">
@@ -849,44 +782,11 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
       </div>
     </div>
 
-    <!-- WO-36: 초과인출금 지급이자 산출 불가 안내 및 필수 입력 항목 카드 -->
-    <div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.3);border-radius:10px;padding:16px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:20px">⚠️</span>
-          <div>
-            <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin:0">초과인출금 지급이자 적수 계산 — 대출 원장 미등록으로 산출 불가 (WO-36)</h4>
-            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">소득세법 시행령 제61조 제1항 제2호: 필요경비 불산입액 = 지급이자(2,927만) × (초과인출금 적수 ÷ 차입금 적수)</div>
-          </div>
-        </div>
-        <span class="badge" style="background:#ca8a04;color:#fff;font-weight:700">원장 탭 추가 필요</span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
-        <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;padding:12px">
-          <div style="font-weight:700;color:#86efac;font-size:12.5px;margin-bottom:6px">✅ 현재 확보된 데이터 (DB 적재 완료)</div>
-          <div style="font-size:12px;color:var(--text);line-height:1.6">
-            • <b>사업주 인출·출자 내역</b>: <code>pyro_owner_account</code> 31건 (출자 3,435만 / 인출 4,727만)<br>
-            • <b>지급이자 실원장</b>: <code>pyro_journal</code> 9200 계정 11건 <b>29,273,036원</b>
-          </div>
-        </div>
-        <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;padding:12px">
-          <div style="font-weight:700;color:#fca5a5;font-size:12.5px;margin-bottom:6px">❌ 부재 데이터 및 필수 입력 항목 (시트 탭 추가 필요)</div>
-          <div style="font-size:12px;color:var(--text);line-height:1.6">
-            • <b>차입금 대출 원장</b>: <b>대출 실행일 · 최초 원금 · 일자별 상환 잔액 · 적용 이자율</b><br>
-            • <b>재무상태표</b>: 기말 사업용 자산 합계액 및 부채 합계액 (초과인출금 판정용)
-          </div>
-        </div>
-      </div>
-      <div style="margin-top:10px;font-size:11.5px;color:var(--text-muted);background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:6px;border:1px solid var(--border)">
-        💡 <b>세무 안내</b>: 2025-09 공장건물(4.2억) 담보대출 추정 시 불산입 세액은 수십만 원대로 추정되나, <b>국세청 세무조사 시 적수 계산 근거 구비 여부가 핵심</b>입니다. 시트에 대출 원장 탭이 추가되면 3단 뷰(<code>pyro_loan</code> ➔ <code>pyro_excess_draw_days</code> ➔ <code>pyro_interest_disallowed</code>)로 자동 산출 연동됩니다.
-      </div>
-    </div>
-
     <div class="pair">
     <!-- 월별 사업부 손익 집계표 (pyro_div_pl 직결) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📊 사업부×월 손익 집계 (<span id="divPlCount">0</span>건)</div>
+        <div class="panel-title">사업부×월 손익 (<span id="divPlCount">0</span>건)</div>
         <div style="display:flex;gap:8px;align-items:center">
           <select id="plYrFilter" class="select" onchange="filterDivPl()">
             <option value="">연도 전체</option>
@@ -929,7 +829,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <!-- 사업주 인출/출자 거래 원장 (pyro_owner_account) -->
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">👤 사업주 계정 거래 원장 (<span id="ownerCount">0</span>건)</div>
+        <div class="panel-title">사업주 계정 원장 (<span id="ownerCount">0</span>건)</div>
         <div style="display:flex;gap:8px"><button class="btn btn-primary btn-xs" onclick="ownerOpen('in')">+ 출자</button><button class="btn btn-ghost btn-xs" onclick="ownerOpen('out')">+ 인출</button></div>
       </div>
       <div class="table-wrap" style="max-height:450px;overflow-y:auto">
@@ -959,7 +859,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div id="tab-journal" class="tab-pane">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">📑 분개 전표 원장 (pyro_journal 152건)</div>
+        <div class="panel-title">전표 원장</div>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="text" id="jvSearch" class="input" placeholder="거래처/적요/계정 검색..." onkeyup="filterJournal()">
           <button class="btn btn-primary" onclick="jvOpen()">+ 전표</button>
@@ -997,8 +897,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <div class="panel">
       <div class="panel-head">
         <div>
-          <div class="panel-title">🏦 통장 거래 원장 (pyro_bank 77건)</div>
-          <div style="font-size:11px;color:var(--text-muted)">보안 가이드라인 준수: 계좌번호 열 비노출</div>
+          <div class="panel-title">통장 원장</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="text" id="bankSearch" class="input" placeholder="적요/거래처 검색..." onkeyup="filterBank()">
@@ -1034,7 +933,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div id="tab-tax-invoices" class="tab-pane">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">🧾 전자세금계산서 원장 (pyro_tax_invoices 29건)</div>
+        <div class="panel-title">세금계산서 원장</div>
         <div style="display:flex;gap:8px;align-items:center">
           <select id="tiFlowFilter" class="select" onchange="filterTaxInvoices()">
             <option value="">매출/매입 전체</option>
@@ -1075,7 +974,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px">
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">🏛️ 개인사업자 파이로 거버넌스 마스터</div>
+          <div class="panel-title">사업자 정보</div>
         </div>
         <div style="padding:16px;line-height:1.8;font-size:13px">
           <div>• 상호: <b>파이로 (PYRO)</b></div>
@@ -1088,7 +987,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
       </div>
       <div class="panel" style="grid-column:1/-1">
         <div class="panel-head">
-          <div class="panel-title">📅 세무 일정</div>
+          <div class="panel-title">세무 일정</div>
           <div style="display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);display:flex;gap:4px;align-items:center"><input type="checkbox" id="ttShowDone" onchange="renderTaxTasks()"> 완료 포함</label><button class="btn btn-primary" onclick="edOpen('ttask')">+ 세무 일정</button></div>
         </div>
         <div class="table-wrap">
@@ -1096,17 +995,6 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
             <thead><tr><th style="width:40px"></th><th>기한</th><th>업무</th><th>세목</th><th>귀속기간</th><th style="text-align:right">금액</th><th>메모</th></tr></thead>
             <tbody id="ttRows"><tr><td colspan="7" style="text-align:center;padding:30px">-</td></tr></tbody>
           </table>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">⚠️ Tax-Risk Guard (엔티티 간 자금 통제)</div>
-        </div>
-        <div style="padding:16px;font-size:12.5px;color:#cbd5e1;line-height:1.6">
-          <p>개인사업자(파이로)와 법인(BVS, SSJG) 간의 자금 이체 시에는 반드시 <b>정당한 세금계산서 발행 및 상환 증빙</b>이 수반되어야 합니다.</p>
-          <p style="margin-top:10px;color:var(--amber)">
-            <b>가지급금 인정이자 및 부당행위계산부인 방지 원칙</b>을 철저히 준수하십시오.
-          </p>
         </div>
       </div>
     </div>
@@ -1832,7 +1720,54 @@ ED.guide = {
 var DIV_NAMES = { RE:'부동산임대', MF:'제조·스크랩', DS:'도소매·공구온', CM:'공통·관리', SV:'서비스' };
 var DIV_COLORS = { RE:'var(--blue)', MF:'var(--green)', DS:'var(--amber)', CM:'var(--purple)', SV:'var(--accent)' };
 function man(n){ n = Number(n) || 0; return (Math.abs(n) >= 10000 ? fmt(Math.round(n / 10000)) + '만' : fmt(n)) ; }
+
+// ── v1.21: 최근 12개월 손익 (pyro_div_pl 집계) ──
+function renderPl12(){
+  var head = document.getElementById('pl12Head'), body = document.getElementById('pl12Rows'), ch = document.getElementById('pl12Chart');
+  if(!head || !body) return;
+  var div = (document.getElementById('pl12Div') || {}).value || '';
+  var t = todayKst(), ey = Number(t.slice(0, 4)), em = Number(t.slice(5, 7));
+  var ms = [];
+  for(var i = 11; i >= 0; i--){ var k = ey * 12 + (em - 1) - i; ms.push({ y:Math.floor(k / 12), m:k % 12 + 1, rev:0, cogs:0, sga:0, op:0 }); }
+  var idx = {}; ms.forEach(function(o, i){ idx[o.y + '-' + o.m] = i; });
+  allDivPl.forEach(function(r){
+    if(div && r.div_code !== div) return;
+    var i = idx[Number(r.yr) + '-' + Number(r.mo)]; if(i == null) return;
+    var o = ms[i]; o.rev += Number(r.revenue) || 0; o.cogs += Number(r.cogs) || 0; o.sga += Number(r.sga) || 0; o.op += Number(r.op_income) || 0;
+  });
+  var tot = ms.reduce(function(a, o){ a.rev += o.rev; a.cogs += o.cogs; a.sga += o.sga; a.op += o.op; return a; }, { rev:0, cogs:0, sga:0, op:0 });
+  var lb = function(o){ return String(o.y).slice(2) + '.' + String(o.m).padStart(2, '0'); };
+  var rg = document.getElementById('pl12Range'); if(rg) rg.textContent = ms[0].y + '.' + String(ms[0].m).padStart(2, '0') + ' ~ ' + ms[11].y + '.' + String(ms[11].m).padStart(2, '0');
+  head.innerHTML = '<tr><th>구분</th>' + ms.map(function(o){ return '<th>' + lb(o) + '</th>'; }).join('') + '<th class="pl12-sum">12개월 합계</th></tr>';
+  var pct = function(o){ return o.rev ? (Math.round(o.op / o.rev * 1000) / 10).toFixed(1) + '%' : '-'; };
+  var num = function(v){ return v ? fmt(Math.round(v)) : '-'; };
+  var opc = function(v){ return v > 0 ? 'amt-plus' : v < 0 ? 'amt-minus' : ''; };
+  var row = function(name, key, cls){
+    return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + name + '</td>' + ms.map(function(o){ return '<td class="' + (key === 'op' ? opc(o.op) : '') + '">' + num(o[key]) + '</td>'; }).join('')
+      + '<td class="pl12-sum ' + (key === 'op' ? opc(tot.op) : '') + '">' + num(tot[key]) + '</td></tr>';
+  };
+  body.innerHTML = row('매출', 'rev') + row('매출원가', 'cogs') + row('판관비', 'sga') + row('영업이익', 'op', 'pl12-op')
+    + '<tr><td>영업이익률</td>' + ms.map(function(o){ return '<td>' + pct(o) + '</td>'; }).join('') + '<td class="pl12-sum">' + pct(tot) + '</td></tr>';
+  if(!ch) return;
+  var W = Math.max(ch.clientWidth - 32, 360), H = 220, top = 20, bot = 24, n = ms.length, gw = W / n;
+  var mx = Math.max.apply(null, ms.map(function(o){ return Math.max(o.rev, o.op, 0); }).concat([1]));
+  var mn = Math.min.apply(null, ms.map(function(o){ return Math.min(o.op, 0); }).concat([0]));
+  var sc = (H - top - bot) / (mx - mn), y0 = top + mx * sc;
+  var bw = Math.min(26, gw * 0.3), g = '';
+  ms.forEach(function(o, i){
+    var cx = i * gw + gw / 2;
+    var hr = o.rev * sc, ho = Math.abs(o.op) * sc;
+    g += '<rect x="' + (cx - bw - 2) + '" y="' + (y0 - hr) + '" width="' + bw + '" height="' + Math.max(hr, 0) + '" rx="2" style="fill:var(--blue)"><title>' + lb(o) + ' 매출 ' + fmt(Math.round(o.rev)) + '원</title></rect>';
+    g += '<rect x="' + (cx + 2) + '" y="' + (o.op >= 0 ? y0 - ho : y0) + '" width="' + bw + '" height="' + ho + '" rx="2" style="fill:' + (o.op >= 0 ? 'var(--green)' : 'var(--red)') + '"><title>' + lb(o) + ' 영업이익 ' + fmt(Math.round(o.op)) + '원</title></rect>';
+    if(o.rev) g += '<text x="' + (cx - bw / 2 - 2) + '" y="' + (y0 - hr - 5) + '" text-anchor="middle" style="fill:var(--text-muted);font-size:11px">' + man(o.rev) + '</text>';
+    g += '<text x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" style="fill:var(--text-muted);font-size:11px">' + lb(o) + '</text>';
+  });
+  g = '<line x1="0" x2="' + W + '" y1="' + y0 + '" y2="' + y0 + '" style="stroke:var(--border)"/>' + g;
+  ch.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="최근 12개월 매출·영업이익">' + g + '</svg>';
+}
+var pl12T; window.addEventListener('resize', function(){ clearTimeout(pl12T); pl12T = setTimeout(renderPl12, 150); });
 function renderDivSummary(){
+  renderPl12();
   var box = document.getElementById('divSummary'); if(!box) return;
   var yr = Number(todayKst().slice(0, 4));
   if(!allDivPl.some(r => Number(r.yr) === yr)){ var ys = allDivPl.map(r => Number(r.yr)); if(ys.length) yr = Math.max.apply(null, ys); }
@@ -1909,18 +1844,16 @@ function renderOwnerKpi(rows){
   var net = inv - drw, set = (id, t) => { var e = document.getElementById(id); if(e) e.textContent = t; };
   set('kpiInvestIn', fmt(inv) + ' 원'); set('kpiInvestInSub', '출자 ' + ni + '건');
   set('kpiDrawOut', fmt(drw) + ' 원'); set('kpiDrawOutSub', '인출 ' + nd + '건');
-  set('kpiNetCum', fmt(net) + ' 원'); set('kpiNetCumSub', net < 0 ? '⚠️ 인출 초과' : '');
+  set('kpiNetCum', fmt(net) + ' 원'); set('kpiNetCumSub', net < 0 ? '인출 초과' : '');
   var e = document.getElementById('kpiNetCum'); if(e) e.style.color = net < 0 ? 'var(--red)' : '';
   var s = document.getElementById('kpiNetCumSub'); if(s) s.style.color = net < 0 ? 'var(--red)' : '';
   set('ownerCount', rows.length);
-  set('trgNet', net < 0 ? fmt(net) + '원의 초과인출' : '순잔액 ' + fmt(net) + '원(초과인출 아님)');
 }
 function renderInterestKpi(){
   var rows = allJournals.filter(r => r.account === '이자비용' || r.pl_code === '9200');
   var amt = rows.reduce((s, r) => s + (Number(r.dr_amt) || 0) - (Number(r.cr_amt) || 0), 0);
   var e = document.getElementById('kpiInterestExp'); if(e) e.textContent = fmt(amt) + ' 원';
   var s = document.getElementById('kpiInterestExpSub'); if(s) s.textContent = '이자 전표 ' + rows.length + '건';
-  var ti = document.getElementById('trgInt'); if(ti) ti.textContent = man(amt) + ' 원';
 }
 
 // ── 원가 견적 이력 (v1.17) ──
@@ -2368,18 +2301,6 @@ function renderVatCard(rows){
   var tbody = document.getElementById('vatTableRows');
   if(!tbody || !rows || rows.length === 0) return;
 
-  // WO-25: 실원장 세액 계산 및 DOM 반영
-  if(allTaxInvoices && allTaxInvoices.length > 0){
-    var p25 = allTaxInvoices.filter(r => (r.write_date||'').startsWith('2025') && r.flow === '매입');
-    var p26 = allTaxInvoices.filter(r => (r.write_date||'').startsWith('2026') && r.flow === '매입');
-    var v25 = p25.reduce((s, r) => s + (Number(r.vat_amt)||0), 0);
-    var v26 = p26.reduce((s, r) => s + (Number(r.vat_amt)||0), 0);
-    var el25 = document.getElementById('vatTi2025');
-    var el26 = document.getElementById('vatTi2026');
-    if(el25) el25.textContent = fmt(v25) + ' 원 (' + p25.length + '건)';
-    if(el26) el26.textContent = fmt(v26) + ' 원 (' + p26.length + '건)';
-  }
-
   tbody.innerHTML = rows.map(r => {
     var isZero = (r.item.includes('매입세액') || r.item.includes('공제')) && (Number(r.annual_amt) === 0);
     return `
@@ -2389,9 +2310,9 @@ function renderVatCard(rows){
         <td class="amt-neutral">${fmt(r.h1_amt)}</td>
         <td class="amt-neutral">${fmt(r.h2_amt)}</td>
         <td class="amt-neutral" style="font-weight:700;font-size:13.5px">
-          ${fmt(r.annual_amt)} 원 ${isZero ? '<span class="tag tag-tax-ok" style="margin-left:4px">임가공용역(0원정상)</span>' : ''}
+          ${fmt(r.annual_amt)} 원
         </td>
-        <td style="font-size:11.5px;color:var(--text-muted)">${r.note || (isZero ? '수탁임가공비 수취 거래 (원자재 매입 없음)' : '-')}</td>
+        <td style="font-size:11.5px;color:var(--text-muted)">${r.note || '-'}</td>
       </tr>
     `;
   }).join('');
@@ -2605,7 +2526,7 @@ function onCalcSpecChange(){
 
   document.getElementById('calcLivePrice').value = fmt(item.live_price) + ' 원/kg' + (item.live_src === 'LME연동' ? ' (LME ' + fmt(item.lme_krw) + ' × ' + (Number(item.ratio) * 100).toFixed(1) + '%)' : ' (국내 ' + (item.live_date || '') + ')');
   document.getElementById('calcBreakLbl').textContent = '손익분기 매입가 (가공·운송 ' + fmt(item.unit_cost) + '원 차감)';
-  var mg = setVal('매입_목표마진율'); document.getElementById('calcGuideLbl').textContent = '★ 현장 권장 매입가' + (mg != null ? ' (목표마진 ' + Math.round(mg * 1000) / 10 + '%)' : '');
+  var mg = setVal('매입_목표마진율'); document.getElementById('calcGuideLbl').textContent = '권장 매입가' + (mg != null ? ' (목표마진 ' + Math.round(mg * 1000) / 10 + '%)' : '');
   document.getElementById('calcYield').value = (item.yield_pct || '0') + ' %';
   recalcMfQuote();
 }
@@ -2684,16 +2605,16 @@ function renderLots(rows){
 
     var statusBadge = '<span class="tag tag-tax-ok">정상기록</span>';
     if(outKg === 0 || yieldPct === 0){
-      statusBadge = '<span class="tag tag-tax-warn" style="background:rgba(245,158,11,0.2);color:#fbbf24">⚠️ 산출 0kg (미회수재고)</span>';
+      statusBadge = '<span class="tag tag-tax-warn" style="background:rgba(245,158,11,0.2);color:#fbbf24">산출 0kg</span>';
     } else if(yieldPct > 100){
-      statusBadge = '<span class="tag tag-tax-warn" style="background:rgba(239,68,68,0.25);color:#fca5a5">⚠️ 수율 이상 (' + yieldPct + '%)</span>';
+      statusBadge = '<span class="tag tag-tax-warn" style="background:rgba(239,68,68,0.25);color:#fca5a5">수율 이상 ' + yieldPct + '%</span>';
     }
 
     var marginPerHourHtml = '—';
     if(manH > 0){
       var mph = Math.round(grossMargin / manH);
       if(mph < 10000){
-        marginPerHourHtml = `<span class="badge" style="background:#dc2626;color:#ffffff;font-weight:700">🔴 ${fmt(mph)}원/h</span>`;
+        marginPerHourHtml = `<span class="badge" style="background:#dc2626;color:#ffffff;font-weight:700">${fmt(mph)}원/h</span>`;
       } else {
         marginPerHourHtml = `<span style="color:var(--accent);font-weight:700">${fmt(mph)}원/h</span> <span class="tiny dim" style="font-size:10.5px;color:var(--text-muted)">(${manH}h)</span>`;
       }
