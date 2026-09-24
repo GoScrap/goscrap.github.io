@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.16 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.17 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -265,7 +265,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 
 <div id="shell">
 <aside id="sb">
-  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.16</span><small>개인사업자 파이로</small></div></div>
+  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.17</span><small>개인사업자 파이로</small></div></div>
   <nav class="sb-nav" id="sbNav">
     <div class="sb-grp">고물상 · 비철</div>
     <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">🪙</span><span class="lb">비철 시세 관제</span></div>
@@ -602,6 +602,19 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
             <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="costTotalSum">총 발주액: 1,215,000 원</div>
           </div>
         </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-primary" onclick="cqSaveFromCalc()">견적 저장</button></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">🗂️ 견적 이력</div>
+        <input type="text" id="cqSearch" class="input" placeholder="고객사/품목 검색..." onkeyup="filterCq()" style="width:200px">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>견적번호</th><th>일자</th><th>고객사</th><th>품목</th><th style="text-align:right">수량</th><th style="text-align:right">원가/개</th><th style="text-align:right">견적단가/개</th><th style="text-align:right">마진율</th><th style="text-align:right">합계</th><th>상태</th></tr></thead>
+          <tbody id="cqRows"><tr><td colspan="10" style="text-align:center;padding:30px">-</td></tr></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -1030,6 +1043,18 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
           <div>• 과세 구분: <b>일반과세자 (부가가치세 1기/2기 확정신고, 5월 종합소득세)</b></div>
         </div>
       </div>
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head">
+          <div class="panel-title">📅 세무 일정</div>
+          <div style="display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);display:flex;gap:4px;align-items:center"><input type="checkbox" id="ttShowDone" onchange="renderTaxTasks()"> 완료 포함</label><button class="btn btn-primary" onclick="edOpen('ttask')">+ 세무 일정</button></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th style="width:40px"></th><th>기한</th><th>업무</th><th>세목</th><th>귀속기간</th><th style="text-align:right">금액</th><th>메모</th></tr></thead>
+            <tbody id="ttRows"><tr><td colspan="7" style="text-align:center;padding:30px">-</td></tr></tbody>
+          </table>
+        </div>
+      </div>
       <div class="panel">
         <div class="panel-head">
           <div class="panel-title">⚠️ Tax-Risk Guard (엔티티 간 자금 통제)</div>
@@ -1210,7 +1235,7 @@ async function startApp(){
   var userDisplay = document.getElementById('userEmail');
   if(userDisplay) userDisplay.innerText = USER || '로그인 완료';
   await loadAllData();
-  await Promise.all([loadTools(), loadVendors()]);
+  await Promise.all([loadTools(), loadVendors(), loadCq(), loadTaxTasks()]);
   recalcCost();
 }
 
@@ -1419,18 +1444,18 @@ ED.ti = {
     { k:'settle_status', l:'정산상태', t:'text' },
     { k:'approval_no', l:'승인번호', t:'text' }
   ],
-  lockRow: (r) => (r.source === 'hometax' || r.issue_status === 'requested' || r.issue_status === 'approved') ? ['flow','write_date','issue_date','supplier','buyer','supply_amt','vat_amt','total_amt','ti_type','approval_no'] : null,
-  noRemove: (r) => r.source === 'hometax' || ['requested','approved','issued'].indexOf(r.issue_status) >= 0,
+  lockRow: (r) => (r.source === 'hometax' || ['requested','approved','issuing'].indexOf(r.issue_status) >= 0) ? ['flow','write_date','issue_date','supplier','buyer','supply_amt','vat_amt','total_amt','ti_type','approval_no'] : null,
+  noRemove: (r) => r.source === 'hometax' || ['requested','approved','issuing','issued'].indexOf(r.issue_status) >= 0,
   after: async (r) => {
     if(r.source !== 'manual') return '';
     var st = r.issue_status || 'none', h = '<div class="ed-sub"><div class="ed-sub-h"><span>국세청 발행' + (ISSUE_LABEL[st] ? ' · ' + ISSUE_LABEL[st] : '') + '</span></div>';
     if(st === 'none' || st === 'failed') h += (r.issue_error ? '<div style="font-size:12px;color:var(--red)">' + edEsc(r.issue_error) + '</div>' : '') + '<button class="btn btn-ghost" id="edIssue" onclick="tiIssue(\'requested\')">발행 요청</button>';
     else if(st === 'requested') h += '<div style="display:flex;gap:8px"><button class="btn btn-primary" id="edIssue" onclick="tiIssue(\'approved\')">발행 승인</button><button class="btn btn-ghost" onclick="tiIssue(\'none\')">요청 취소</button></div>';
-    else if(st === 'approved') h += '<div style="font-size:12px;color:var(--text-muted)">' + edEsc((r.issue_approved_at || '').slice(0,16).replace('T',' ')) + '</div>';
+    else if(st === 'approved' || st === 'issuing') h += '<div style="font-size:12px;color:var(--text-muted)">' + edEsc((r.issue_approved_at || '').slice(0,16).replace('T',' ')) + '</div>';
     return h + '</div>';
   },
   onOpen: (row) => {
-    if(row && (row.source === 'hometax' || row.issue_status === 'requested' || row.issue_status === 'approved')) return;
+    if(row && (row.source === 'hometax' || ['requested','approved','issuing'].indexOf(row.issue_status) >= 0)) return;
     var s = document.getElementById('ed_supply_amt'), v = document.getElementById('ed_vat_amt'), tt = document.getElementById('ed_total_amt');
     var num = x => { var n = Number(String(x).replace(/,/g, '')); return isFinite(n) ? n : null; };
     var auto = { vat: !v.value, tot: !tt.value };
@@ -1510,7 +1535,7 @@ ED.vendor = {
 };
 
 // ── 세금계산서 발행 요청·승인 (v1.16) — 실제 발행은 승인된 건만 발행기가 처리 ──
-var ISSUE_LABEL = { none:'', requested:'발행요청', approved:'발행승인', issued:'발행완료', failed:'발행실패' };
+var ISSUE_LABEL = { none:'', requested:'발행요청', approved:'발행승인', issuing:'발행중', issued:'발행완료', failed:'발행실패' };
 async function tiIssue(next){
   var o = edState && edState.orig; if(!o) return;
   var b = document.getElementById('edIssue'), err = document.getElementById('edErr');
@@ -1526,6 +1551,105 @@ async function tiIssue(next){
   edClose(); edToast(ISSUE_LABEL[next] || '요청 취소됨');
   await loadTaxInvoices();
 }
+
+// ── 원가 견적 이력 (v1.17) ──
+var allCq = [], cqView = [];
+var CQ_ST = { open:'진행', won:'수주', lost:'실주' };
+async function loadCq(){
+  var { data } = await sb.from('pyro_cost_quotes').select('*').order('quote_date', { ascending:false }).order('quote_no', { ascending:false });
+  if(data){ allCq = data.filter(r => r.is_active !== false && r.status !== 'void'); filterCq(); }
+}
+function filterCq(){
+  var el = document.getElementById('cqSearch'), q = el ? el.value.trim().toLowerCase() : '';
+  var rows = allCq.filter(r => !q || [r.client, r.item_name, r.quote_no].some(x => x && String(x).toLowerCase().includes(q)));
+  cqView = rows;
+  var tb = document.getElementById('cqRows');
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px">저장된 견적이 없습니다.</td></tr>'; return; }
+  tb.innerHTML = rows.map((r, i) => `<tr class="ed-row" onclick="edOpen('cq', cqView[${i}])"><td style="font-size:11px;color:var(--text-muted)">${edEsc(r.quote_no)}</td><td>${edEsc(r.quote_date)}</td><td><strong>${edEsc(r.client)}</strong></td><td>${edEsc(r.item_name)}</td><td style="text-align:right">${fmt(r.qty)}</td><td style="text-align:right">${Number(r.cost_price || 0).toFixed(1)}</td><td style="text-align:right">${fmt(r.unit_price)}</td><td style="text-align:right">${Number(r.margin_rate || 0).toFixed(1)}%</td><td style="text-align:right;font-weight:700">${fmt(r.total_amt)}</td><td><span class="tag ${r.status === 'won' ? 'tag-done' : 'tag-wait'}">${CQ_ST[r.status] || r.status}</span></td></tr>`).join('');
+}
+function cqSaveFromCalc(){
+  recalcCost();
+  if(!lastCost){ edToast('원가 계산 필요'); return; }
+  var c = lastCost;
+  edOpen('cq', null, { item_name: 'PE 튜브 Φ' + c.dia + '×' + c.len + 'mm ' + c.colors + '도', qty: c.qty, cost_price: c.unit });
+}
+function cqNo(){
+  var d = todayKst().replace(/-/g, '').slice(2), pre = 'Q' + d + '-';
+  var n = allCq.filter(r => (r.quote_no || '').startsWith(pre)).map(r => parseInt(r.quote_no.slice(pre.length), 10) || 0);
+  return pre + String((n.length ? Math.max.apply(null, n) : 0) + 1).padStart(3, '0');
+}
+ED.cq = {
+  title: '견적',
+  fields: [
+    { k:'quote_no', l:'견적번호', t:'text', lock:true, def:cqNo },
+    { k:'quote_date', l:'견적일', t:'date', req:true, def:todayKst },
+    { k:'client', l:'고객사', t:'text', req:true },
+    { k:'item_name', l:'품목', t:'text', req:true },
+    { k:'qty', l:'수량', t:'number', req:true },
+    { k:'cost_price', l:'원가/개 (원)', t:'number', req:true },
+    { k:'unit_price', l:'견적단가/개 (원)', t:'number', req:true },
+    { k:'status', l:'상태', t:'select', opts:['open','won','lost'], def:'open' },
+    { k:'memo', l:'메모', t:'textarea' }
+  ],
+  prep: (v, o) => {
+    var g = k => v[k] !== undefined ? v[k] : (o ? o[k] : null);
+    var up = Number(g('unit_price')) || 0, cp = Number(g('cost_price')) || 0, q = Number(g('qty')) || 0;
+    if(up <= 0 || q <= 0) return '수량·견적단가는 0보다 커야 함';
+    v.margin_rate = Math.round((up - cp) / up * 1000) / 10;
+    v.total_amt = Math.round(up * q);
+    if(!o){
+      if(!v.quote_no) v.quote_no = cqNo();
+      if(lastCost && edState.preset && edState.preset.cost_price === lastCost.unit) v.spec = lastCost;
+    }
+    return null;
+  },
+  save: async (v, o) => o ? sb.from('pyro_cost_quotes').update(v).eq('id', o.id) : sb.from('pyro_cost_quotes').insert(v),
+  removeLabel: '무효',
+  remove: async (o) => sb.from('pyro_cost_quotes').update({ status:'void' }).eq('id', o.id),
+  reload: loadCq
+};
+
+// ── 세무 일정 (v1.17) ──
+var allTt = [], ttView = [];
+async function loadTaxTasks(){
+  var { data } = await sb.from('pyro_tax_tasks').select('*').order('due_date');
+  if(data){ allTt = data.filter(r => r.is_active !== false); renderTaxTasks(); }
+}
+function renderTaxTasks(){
+  var showDone = document.getElementById('ttShowDone') && document.getElementById('ttShowDone').checked;
+  var rows = allTt.filter(r => showDone || !r.is_done);
+  ttView = rows;
+  var today = todayKst(), tb = document.getElementById('ttRows');
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px">남은 세무 일정이 없습니다.</td></tr>'; return; }
+  tb.innerHTML = rows.map((r, i) => {
+    var dd = Math.round((new Date(r.due_date) - new Date(today)) / 86400000);
+    var cls = r.is_done ? 'color:var(--text-muted);text-decoration:line-through' : (dd < 0 ? 'color:var(--red);font-weight:700' : (dd <= 14 ? 'color:var(--amber);font-weight:700' : ''));
+    var dtag = r.is_done ? '' : ' <span style="font-size:11px">(' + (dd < 0 ? dd * -1 + '일 지남' : 'D-' + dd) + ')</span>';
+    return `<tr class="ed-row" onclick="edOpen('ttask', ttView[${i}])"><td onclick="event.stopPropagation()"><input type="checkbox" ${r.is_done ? 'checked' : ''} onchange="ttToggle(${i}, this)" aria-label="완료"></td><td style="${cls}">${edEsc(r.due_date)}${dtag}</td><td style="${r.is_done ? cls : ''}"><strong>${edEsc(r.task_name)}</strong></td><td>${edEsc(r.tax_type)}</td><td>${edEsc(r.period || '-')}</td><td style="text-align:right">${r.amt ? fmt(r.amt) : '-'}</td><td>${edEsc(r.memo || '')}</td></tr>`;
+  }).join('');
+}
+async function ttToggle(i, el){
+  var r = ttView[i], v = el.checked;
+  el.disabled = true;
+  var res = await sb.from('pyro_tax_tasks').update({ is_done: v, done_at: v ? new Date().toISOString() : null }).eq('id', r.id);
+  el.disabled = false;
+  if(res.error){ el.checked = !v; edToast('저장 실패: ' + res.error.message); return; }
+  r.is_done = v; renderTaxTasks();
+}
+ED.ttask = {
+  title: '세무 일정',
+  fields: [
+    { k:'task_name', l:'업무', t:'text', req:true },
+    { k:'tax_type', l:'세목', t:'select', opts:['부가가치세','종합소득세','원천세','기타세무'], def:'부가가치세' },
+    { k:'period', l:'귀속기간', t:'text' },
+    { k:'due_date', l:'기한', t:'date', req:true },
+    { k:'amt', l:'금액 (원)', t:'number' },
+    { k:'memo', l:'메모', t:'textarea' }
+  ],
+  save: async (v, o) => o ? sb.from('pyro_tax_tasks').update(v).eq('id', o.id) : sb.from('pyro_tax_tasks').insert(v),
+  remove: async (o) => sb.from('pyro_tax_tasks').update({ is_active:false }).eq('id', o.id),
+  reload: loadTaxTasks
+};
 
 async function loadJournal(){
   var { data } = await sb.from('pyro_journal').select('*').order('jv_date', { ascending: false }).order('jv_no', { ascending: false });
@@ -1794,7 +1918,11 @@ async function loadAllData(){
     await loadMetals();
 
     // 2. 67종 매입 견적 마스터 (산식 검증 완료 뷰)
-    var { data: gData } = await sb.from('pyro_mf_price_guide').select('*').order('row_no', { ascending: true });
+    var { data: gData, error: gErr } = await sb.from('pyro_mf_price_guide').select('*').order('row_no', { ascending: true });
+    if(gErr){
+      var gtb = document.querySelector('#tab-mf-guide tbody');
+      if(gtb) gtb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--red)">불러오기 실패: ' + edEsc(gErr.message) + '</td></tr>';
+    }
     if(gData){
       allGuides = gData;
       renderGuides(allGuides);
@@ -2261,6 +2389,7 @@ function filterTools(){
 }
 
 // ── 25 튜브·사출 단위원가 정밀 자동 산출기 ──
+var lastCost = null;
 function recalcCost(){
   var dia = Number(document.getElementById('tubeDia').value) || 35;
   var qty = Number(document.getElementById('orderQty').value) || 10000;
@@ -2284,6 +2413,7 @@ function recalcCost(){
 
   var totalUnit = fabricCost + capUnit + printCost + boxLabor;
   var totalOrder = totalUnit * qty;
+  lastCost = { dia:dia, qty:qty, len:len, colors:colors, fabric:+fabricCost.toFixed(2), cap:capUnit, print:+printCost.toFixed(2), box:boxLabor, unit:Math.round(totalUnit * 10) / 10 };
 
   document.getElementById('costFabric').innerText = fabricCost.toFixed(1) + ' 원';
   document.getElementById('costCap').innerText = capUnit.toFixed(1) + ' 원';
