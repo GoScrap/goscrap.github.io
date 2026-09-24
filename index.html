@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.11 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.12 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -146,6 +146,11 @@ footer{text-align:center;padding:24px;font-size:11px;color:var(--text-muted);bor
 .btn-danger.armed{background:var(--red);color:#fff}
 .btn:disabled{opacity:.5;cursor:default}
 tr.ed-row{cursor:pointer}
+.ed-sub{border-top:1px solid var(--border);padding-top:10px;display:grid;gap:6px}
+.ed-sub-h{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--text-muted)}
+.ed-sub-i{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer}
+.ed-sub-i:hover{border-color:var(--accent)}
+.btn-xs{padding:4px 8px;font-size:11px}
 .ed-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;z-index:1100;box-shadow:0 8px 20px rgba(0,0,0,.35)}
 html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{background:#fff}
 @media (max-width:600px){.ed-back{padding:0;align-items:stretch}.ed-card{width:100%;max-height:none;border-radius:0}}
@@ -221,7 +226,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   <div class="brand">
     <div class="logo">PY</div>
     <div>
-      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.11</span></div>
+      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.12</span></div>
       <div style="font-size:11px;color:var(--text-muted)">개인사업자 파이로 (PYRO)</div>
     </div>
   </div>
@@ -444,6 +449,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         <div class="panel-title">📦 고물상(MF) 로트 진행 원장 (총 <span id="lotCount">0</span>건)</div>
         <div style="display:flex;gap:8px">
           <input type="text" id="lotSearch" class="input" placeholder="입고ID/품목/수거처 검색..." onkeyup="filterLots()" style="width:220px">
+          <button class="btn btn-primary" onclick="edOpen('lot')">+ 입고</button>
         </div>
       </div>
       <div class="table-wrap" style="max-height:550px;overflow-y:auto">
@@ -461,10 +467,11 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
               <th style="text-align:right">조이익(원)</th>
               <th style="text-align:right">시간당 조이익</th>
               <th>세무증빙/인적사항</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="lotTableBody">
-            <tr><td colspan="11" style="text-align:center;padding:30px">로트 데이터를 불러오는 중...</td></tr>
+            <tr><td colspan="12" style="text-align:center;padding:30px">로트 데이터를 불러오는 중...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1012,6 +1019,7 @@ var allMetals = [];
 var metalView = [];
 var allGuides = [];
 var allLots = [];
+var lotView = [];
 var allDivPl = [];
 var allOwnerAcc = [];
 var allJournals = [];
@@ -1209,18 +1217,115 @@ var ED = {
     ],
     // 기존 행 수정 시 기준일은 오늘로 새로 기록(이력 보존)
     editDefaults: { price_date: todayKst },
+    fullRow: (o) => ({ metal:o.metal, grade:o.grade, unit:o.unit, price:o.price }),
     save: async (v) => sb.from('pyro_metal_prices').upsert(v, { onConflict: 'metal,price_date,grade' }),
     remove: async (o) => sb.from('pyro_metal_prices').delete().match({ metal:o.metal, grade:o.grade, price_date:o.price_date }),
     reload: loadMetals
+  },
+  lot: {
+    title: '입고',
+    table: 'pyro_mf_in',
+    fields: [
+      { k:'in_id', l:'입고ID', t:'text', lock:true },
+      { k:'in_date', l:'입고일', t:'date', req:true, def:todayKst },
+      { k:'item', l:'품목', t:'text', req:true },
+      { k:'source', l:'수거처', t:'text' },
+      { k:'status', l:'상태', t:'select', opts:['입고','작업중','완료'], def:'입고' },
+      { k:'in_kg', l:'입고중량 (kg)', t:'number' },
+      { k:'net_kg', l:'순중량 (kg)', t:'number' },
+      { k:'used_kg', l:'투입중량 (kg)', t:'number' },
+      { k:'buy_amt', l:'매입금액 (원)', t:'number' },
+      { k:'freight', l:'운반비 (원)', t:'number' },
+      { k:'evidence', l:'증빙', t:'text' },
+      { k:'memo', l:'메모', t:'textarea' }
+    ],
+    save: async (v, o) => {
+      var id = v.in_id; delete v.in_id;
+      if(o) return sb.from('pyro_mf_in').update(v).eq('in_id', o.in_id);
+      if(id) v.in_id = id;
+      return sb.from('pyro_mf_in').insert(v);
+    },
+    remove: async (o) => {
+      var w = await sb.from('pyro_mf_work').select('id', { count:'exact', head:true }).eq('in_id', o.in_id);
+      var s = await sb.from('pyro_mf_out').select('id', { count:'exact', head:true }).eq('in_id', o.in_id);
+      if(w.error) return w; if(s.error) return s;
+      if((w.count || 0) + (s.count || 0) > 0) return { error: { message: '가공 ' + (w.count||0) + '건 · 매각 ' + (s.count||0) + '건을 먼저 삭제' } };
+      return sb.from('pyro_mf_in').delete().eq('in_id', o.in_id);
+    },
+    after: async (o) => {
+      var w = await sb.from('pyro_mf_work').select('*').eq('in_id', o.in_id).order('work_date');
+      var s = await sb.from('pyro_mf_out').select('*').eq('in_id', o.in_id).order('out_date');
+      edSub.work = w.data || []; edSub.out = s.data || [];
+      var line = function(kind, r, i, left, right){ return '<div class="ed-sub-i" onclick="edOpen(\'' + kind + '\', edSub.' + kind + '[' + i + '])"><span>' + left + '</span><span>' + right + '</span></div>'; };
+      var id = edEsc(o.in_id).replace(/'/g, '&#39;');
+      return '<div class="ed-sub"><div class="ed-sub-h"><span>가공 ' + edSub.work.length + '건</span><button class="btn btn-ghost btn-xs" onclick="edOpen(\'work\', null, {in_id: edState.orig.in_id})">+ 가공</button></div>'
+        + edSub.work.map(function(r, i){ return line('work', r, i, edEsc(r.work_date) + ' ' + edEsc(r.work_desc || ''), fmt(r.hours) + 'h × ' + fmt(r.headcount || 1) + '명'); }).join('')
+        + '</div><div class="ed-sub"><div class="ed-sub-h"><span>매각 ' + edSub.out.length + '건</span><button class="btn btn-ghost btn-xs" onclick="edOpen(\'out\', null, {in_id: edState.orig.in_id})">+ 매각</button></div>'
+        + edSub.out.map(function(r, i){ return line('out', r, i, edEsc(r.out_date) + ' ' + edEsc(r.buyer || ''), fmt(r.out_kg) + 'kg · ' + fmt(r.total_amt) + '원'); }).join('')
+        + '</div>';
+    },
+    load: async (o) => sb.from('pyro_mf_in').select('*').eq('in_id', o.in_id).single(),
+    reload: loadLots
+  },
+  work: {
+    title: '가공',
+    table: 'pyro_mf_work',
+    fields: [
+      { k:'in_id', l:'입고ID', t:'text', req:true, lock:true, lockPreset:true },
+      { k:'work_date', l:'작업일', t:'date', req:true, def:todayKst },
+      { k:'work_desc', l:'작업내용', t:'text' },
+      { k:'used_kg', l:'투입중량 (kg)', t:'number' },
+      { k:'headcount', l:'인원', t:'number', def:1 },
+      { k:'hours', l:'작업시간 (h)', t:'number' },
+      { k:'workers', l:'작업자', t:'text' },
+      { k:'memo', l:'메모', t:'textarea' }
+    ],
+    save: async (v, o) => o ? sb.from('pyro_mf_work').update(v).eq('id', o.id) : sb.from('pyro_mf_work').insert(v),
+    remove: async (o) => sb.from('pyro_mf_work').delete().eq('id', o.id),
+    reload: loadLots
+  },
+  out: {
+    title: '매각',
+    table: 'pyro_mf_out',
+    fields: [
+      { k:'in_id', l:'입고ID', t:'text', req:true, lock:true, lockPreset:true },
+      { k:'out_date', l:'매각일', t:'date', req:true, def:todayKst },
+      { k:'buyer', l:'매각처', t:'text' },
+      { k:'product', l:'매각품목', t:'text' },
+      { k:'out_kg', l:'매각중량 (kg)', t:'number' },
+      { k:'sell_unit', l:'단가 (원/kg)', t:'number' },
+      { k:'supply_amt', l:'공급가 (원)', t:'number' },
+      { k:'vat_amt', l:'부가세 (원)', t:'number' },
+      { k:'total_amt', l:'합계 (원)', t:'number' },
+      { k:'ar_amt', l:'미수금 (원)', t:'number' },
+      { k:'memo', l:'메모', t:'textarea' }
+    ],
+    prep: (v, o) => {
+      if(o) return null;
+      if(v.supply_amt == null && v.out_kg != null && v.sell_unit != null) v.supply_amt = Math.round(v.out_kg * v.sell_unit);
+      if(v.total_amt == null && v.supply_amt != null) v.total_amt = v.supply_amt + (v.vat_amt || 0);
+      return null;
+    },
+    save: async (v, o) => o ? sb.from('pyro_mf_out').update(v).eq('id', o.id) : sb.from('pyro_mf_out').insert(v),
+    remove: async (o) => sb.from('pyro_mf_out').delete().eq('id', o.id),
+    reload: loadLots
   }
 };
+var edSub = { work: [], out: [] };
 var edState = null;
 function edEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function edOpen(kind, row){
+async function edOpen(kind, row, preset){
   var cfg = ED[kind]; if(!cfg) return;
+  if(row && cfg.load){
+    var full = await cfg.load(row);
+    if(full.error || !full.data){ edToast('불러오기 실패'); return; }
+    row = full.data;
+  }
   var isEdit = !!row;
-  edState = { kind:kind, cfg:cfg, orig:row || null };
+  preset = preset || {};
+  edState = { kind:kind, cfg:cfg, orig:row || null, preset:preset };
   var val = function(f){
+    if(!isEdit && preset[f.k] != null) return preset[f.k];
     if(isEdit && cfg.editDefaults && cfg.editDefaults[f.k]) return cfg.editDefaults[f.k]();
     if(isEdit && row[f.k] != null) return row[f.k];
     return typeof f.def === 'function' ? f.def() : (f.def == null ? '' : f.def);
@@ -1229,16 +1334,18 @@ function edOpen(kind, row){
     + '<div class="ed-head"><span>' + edEsc(cfg.title) + (isEdit ? ' 수정' : ' 추가') + '</span><button class="ed-x" onclick="edClose()" aria-label="닫기">×</button></div>'
     + '<div class="ed-body">'
     + cfg.fields.map(function(f){
-        var ro = (isEdit && f.lock) ? ' readonly' : '';
+        var ro = ((isEdit && f.lock) || (!isEdit && f.lockPreset && preset[f.k] != null)) ? ' readonly' : '';
         var input;
         if(f.t === 'select'){
           input = '<select class="select" id="ed_' + f.k + '"' + (ro ? ' disabled' : '') + '>' + f.opts.map(function(o){ return '<option' + (String(val(f))===o ? ' selected' : '') + '>' + edEsc(o) + '</option>'; }).join('') + '</select>';
+        } else if(f.t === 'textarea'){
+          input = '<textarea class="input" id="ed_' + f.k + '" rows="2"' + ro + '>' + edEsc(val(f)) + '</textarea>';
         } else {
           input = '<input class="input" id="ed_' + f.k + '" type="' + (f.t==='number' ? 'text' : f.t) + '"' + (f.t==='number' ? ' inputmode="decimal" style="text-align:right"' : '') + ' value="' + edEsc(val(f)) + '"' + ro + '>';
         }
         return '<div class="ed-f"><label for="ed_' + f.k + '">' + edEsc(f.l) + (f.req ? ' *' : '') + '</label>' + input + '</div>';
       }).join('')
-    + '<div class="ed-err" id="edErr"></div></div>'
+    + '<div id="edAfter"></div><div class="ed-err" id="edErr"></div></div>'
     + '<div class="ed-foot">'
     + (isEdit && cfg.remove ? '<button class="btn btn-danger" id="edDel" onclick="edDelete()">삭제</button>' : '')
     + '<span class="sp"></span><button class="btn btn-ghost" onclick="edClose()">취소</button>'
@@ -1249,10 +1356,13 @@ function edOpen(kind, row){
   document.addEventListener('keydown', edKey);
   var first = document.querySelector('#edBack .input:not([readonly]), #edBack select:not([disabled])');
   if(first) first.focus();
+  if(isEdit && cfg.after){
+    cfg.after(row).then(function(h){ var a = document.getElementById('edAfter'); if(a && edState && edState.orig === row) a.innerHTML = h; });
+  }
 }
 function edKey(e){
   if(e.key === 'Escape') edClose();
-  if(e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') edSave();
+  if(e.key === 'Enter' && e.target && e.target.tagName === 'INPUT' && e.target.closest('#edBack')) edSave();
 }
 function edClose(){
   var b = document.getElementById('edBack'); if(b) b.remove();
@@ -1278,6 +1388,16 @@ async function edSave(){
     }
     v[f.k] = x === '' ? null : x;
   }
+  if(edState.orig){
+    var o = edState.orig, changed = 0;
+    Object.keys(v).forEach(function(k){
+      var a = v[k] == null ? '' : String(v[k]), b = o[k] == null ? '' : String(o[k]);
+      if(a === b && !(cfg.editDefaults && cfg.editDefaults[k])) delete v[k]; else changed++;
+    });
+    if(!changed){ edClose(); return; }
+    if(cfg.fullRow) v = Object.assign({}, cfg.fullRow(o), v);
+  }
+  if(cfg.prep){ var pe = cfg.prep(v, edState.orig); if(pe){ err.textContent = pe; return; } }
   edBusy(true); err.textContent = '';
   var res = await cfg.save(v, edState.orig);
   edBusy(false);
@@ -1295,6 +1415,19 @@ async function edDelete(){
   if(res && res.error){ document.getElementById('edErr').textContent = '삭제 실패: ' + res.error.message; return; }
   edClose(); edToast('삭제됨');
   if(cfg.reload) await cfg.reload();
+}
+
+async function loadLots(){
+  var { data: lData } = await sb.from('pyro_mf_lot').select('*').order('in_date', { ascending: false });
+  if(lData){
+    allLots = lData;
+    var q = document.getElementById('lotSearch');
+    if(q && q.value.trim()) filterLots(); else renderLots(allLots);
+    var totalSales = allLots.reduce((acc, l) => acc + (Number(l.sell_total) || 0), 0);
+    if(totalSales > 0){
+      document.getElementById('kpiMfTotalSales').innerText = fmt(totalSales) + ' 원';
+    }
+  }
 }
 
 async function loadMetals(){
@@ -1336,16 +1469,8 @@ async function loadAllData(){
       populateGuideSelect(allGuides);
     }
 
-    // 3. 로트 진행판 (27건)
-    var { data: lData } = await sb.from('pyro_mf_lot').select('*').order('in_date', { ascending: false });
-    if(lData){
-      allLots = lData;
-      renderLots(allLots);
-      var totalSales = allLots.reduce((acc, l) => acc + (Number(l.sell_total) || 0), 0);
-      if(totalSales > 0){
-        document.getElementById('kpiMfTotalSales').innerText = fmt(totalSales) + ' 원';
-      }
-    }
+    // 3. 로트 진행판
+    await loadLots();
 
     // 4. 사업부별 손익 (pyro_div_pl)
     var { data: plData } = await sb.from('pyro_div_pl').select('*').order('yr', { ascending: false }).order('mo', { ascending: false });
@@ -1717,11 +1842,12 @@ function renderLots(rows){
   var tbody = document.getElementById('lotTableBody');
   document.getElementById('lotCount').innerText = rows.length;
   if(!rows || rows.length === 0){
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px">등록된 로트가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px">등록된 로트가 없습니다.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(r => {
-    var isDone = r.status === '작업완료';
+  lotView = rows;
+  tbody.innerHTML = rows.map((r, i) => {
+    var isDone = r.status === '작업완료' || r.status === '완료';
     var isPositiveMargin = Number(r.gross_margin) > 0;
     var outKg = Number(r.out_kg) || 0;
     var yieldPct = Number(r.yield_pct) || 0;
@@ -1746,7 +1872,7 @@ function renderLots(rows){
     }
 
     return `
-      <tr>
+      <tr class="ed-row" onclick="edOpen('lot', lotView[${i}])">
         <td style="font-variant-numeric:tabular-nums;color:var(--text-muted)">${r.in_date || '-'}</td>
         <td><strong>${r.item}</strong><div style="font-size:10.5px;color:var(--text-muted)">${r.in_id}</div></td>
         <td>${r.source || '-'}</td>
@@ -1758,6 +1884,7 @@ function renderLots(rows){
         <td class="${isPositiveMargin ? 'amt-plus' : 'amt-neutral'}">${fmt(r.gross_margin)} 원</td>
         <td style="text-align:right">${marginPerHourHtml}</td>
         <td>${statusBadge}</td>
+        <td style="white-space:nowrap" onclick="event.stopPropagation()"><button class="btn btn-ghost btn-xs" onclick="edOpen('work', null, {in_id: lotView[${i}].in_id})">가공</button> <button class="btn btn-ghost btn-xs" onclick="edOpen('out', null, {in_id: lotView[${i}].in_id})">매각</button></td>
       </tr>
     `;
   }).join('');
