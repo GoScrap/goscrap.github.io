@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.18 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.19 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -109,6 +109,9 @@ html[data-theme="light"] #sb .tab-item:hover{background:#f1f5f9}
 .tab-pane.active{display:block}
 
 /* KPI Cards */
+.fuel-row{display:flex;gap:22px;align-items:baseline;flex-wrap:wrap;font-size:13px;margin-top:4px}.fuel-row b{font-size:18px;margin-left:4px}
+.src-badge{font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--border);color:var(--text-muted);white-space:nowrap}.src-badge.lme{color:var(--accent);border-color:var(--accent)}
+.cost-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px;padding:12px;border:1px dashed var(--border);border-radius:8px}.cost-bar label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}.cost-bar .input{width:110px;text-align:right}
 .mf-top{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start;margin-bottom:20px}
 .mf-top .panel{margin-bottom:0}
 .mf-top .kpi-2x2{grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
@@ -271,7 +274,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 
 <div id="shell">
 <aside id="sb">
-  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.18</span><small>개인사업자 파이로</small></div></div>
+  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.19</span><small>개인사업자 파이로</small></div></div>
   <nav class="sb-nav" id="sbNav">
     <div class="sb-grp">고물상 · 비철</div>
     <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">🪙</span><span class="lb">비철 시세 관제</span></div>
@@ -356,8 +359,12 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
       </div>
       <div class="kpi-card purple">
         <div class="kpi-label">누적 실적 매출 합계</div>
-        <div class="kpi-val" id="kpiMfTotalSales">6,454,535 원</div>
-        <div class="kpi-sub">MF매출 59건 전량 수금 (미수 0원)</div>
+        <div class="kpi-val" id="kpiMfTotalSales">-</div>
+        <div class="kpi-sub" id="kpiMfTotalSalesSub"></div>
+      </div>
+      <div class="kpi-card fuel-card ed-row" onclick="fuelOpen()" style="grid-column:1 / -1">
+        <div class="kpi-label">유류비 (전국 평균, 원/L)</div>
+        <div class="fuel-row"><span>경유 <b id="fuelDiesel">-</b></span><span>휘발유 <b id="fuelGas">-</b></span><span class="kpi-sub" id="fuelDate"></span></div>
       </div>
     </div>
     </div>
@@ -377,17 +384,32 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
             <tr>
               <th>금속/품목</th>
               <th>최신 시세</th>
+              <th style="text-align:right">LME 환산</th>
               <th>단위</th>
               <th>시세 기준일자</th>
               <th>스크랩 등급/출처</th>
             </tr>
           </thead>
           <tbody id="metalTableBody">
-            <tr><td colspan="5" style="text-align:center;padding:30px">시세 데이터를 불러오는 중...</td></tr>
+            <tr><td colspan="6" style="text-align:center;padding:30px">시세 데이터를 불러오는 중...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
+    <!-- 등급별 LME 연동 비율 (pyro_grade_lme_map) -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">🔗 등급별 LME 연동 비율 (<span id="ratioCount">0</span>종)</div>
+        <button class="btn btn-primary btn-xs" onclick="ratioOpen(null)">+ 연동</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>품목</th><th>LME</th><th style="text-align:right">비율</th><th style="text-align:right">국내 시세</th><th style="text-align:right">LME 환산</th><th>기준일</th><th>방식</th><th>메모</th></tr></thead>
+          <tbody id="ratioRows"><tr><td colspan="8" style="text-align:center;padding:30px">-</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 세무 주의보 배너 (Claude 지침 반영) -->
     <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:16px;margin-bottom:20px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
@@ -417,6 +439,18 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
         </div>
       </div>
       <div style="padding:20px">
+        <div class="cost-bar">
+          <div><label for="cbFee">기본 가공비 (원/kg)</label><input class="input" id="cbFee" inputmode="decimal"></div>
+          <div><label for="cbFreight">기본 운송비 (원/kg)</label><input class="input" id="cbFreight" inputmode="decimal"></div>
+          <div><label for="cbMargin">목표마진 (%)</label><input class="input" id="cbMargin" inputmode="decimal"></div>
+          <button class="btn btn-primary btn-xs" id="cbSave" onclick="costBarSave()">저장</button>
+          <span style="flex:1"></span>
+          <div><label for="cbKm">왕복 거리 (km)</label><input class="input" id="cbKm" inputmode="decimal" oninput="freightRef()"></div>
+          <div><label for="cbKpl">연비 (km/L)</label><input class="input" id="cbKpl" inputmode="decimal" oninput="freightRef()"></div>
+          <div><label for="cbLoad">1회 적재 (kg)</label><input class="input" id="cbLoad" inputmode="decimal" oninput="freightRef()"></div>
+          <div><label for="cbTrip">1회 인건·차량비 (원)</label><input class="input" id="cbTrip" inputmode="decimal" oninput="freightRef()"></div>
+          <div><label>참고 운송비</label><div id="cbRef" style="font-weight:700;padding:7px 0;min-width:90px">-</div></div>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:16px">
           <div>
             <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">선택 규격</label>
@@ -446,12 +480,12 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
             <div id="calcTotalRecover" style="font-size:11px;color:var(--text-muted);margin-top:2px">총 0 원</div>
           </div>
           <div>
-            <div style="font-size:11px;color:var(--text-muted)">손익분기 매입가 (가공400+운송80 차감)</div>
+            <div style="font-size:11px;color:var(--text-muted)" id="calcBreakLbl">손익분기 매입가</div>
             <div id="calcUnitBreak" style="font-size:18px;font-weight:700;color:var(--amber)">0 원/kg</div>
             <div id="calcTotalBreak" style="font-size:11px;color:var(--text-muted);margin-top:2px">총 0 원</div>
           </div>
           <div style="border-left:2px solid var(--accent);padding-left:14px">
-            <div style="font-size:11px;color:var(--green);font-weight:700">★ 현장 권장 매입가 (목표마진 25% 확보)</div>
+            <div style="font-size:11px;color:var(--green);font-weight:700" id="calcGuideLbl">★ 현장 권장 매입가</div>
             <div id="calcUnitGuide" style="font-size:22px;font-weight:700;color:var(--green)">0 원/kg</div>
             <div id="calcTotalGuide" style="font-size:12px;color:var(--text);font-weight:700;margin-top:2px">총 권장매입금액: 0 원</div>
           </div>
@@ -477,7 +511,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
               <th>도체</th>
               <th style="text-align:right">수율(%)</th>
               <th style="text-align:right">적용시세</th>
-              <th>시세기준일</th>
+              <th>출처</th>
               <th style="text-align:right">회수가치</th>
               <th style="text-align:right">손익분기매입가</th>
               <th style="text-align:right;color:var(--green)">권장매입가 (마진25%)</th>
@@ -887,7 +921,7 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     <div class="panel">
       <div class="panel-head">
         <div class="panel-title">👤 사업주 계정 거래 원장 (<span id="ownerCount">0</span>건)</div>
-        <div style="font-size:11px;color:var(--text-muted)">개인 자금 입출금 내역 및 누적 잔액 추이</div>
+        <div style="display:flex;gap:8px"><button class="btn btn-primary btn-xs" onclick="ownerOpen('in')">+ 출자</button><button class="btn btn-ghost btn-xs" onclick="ownerOpen('out')">+ 인출</button></div>
       </div>
       <div class="table-wrap" style="max-height:450px;overflow-y:auto">
         <table>
@@ -1554,6 +1588,163 @@ async function tiIssue(next){
   await loadTaxInvoices();
 }
 
+// ── v1.19: 설정값 (pyro_settings_master) ──
+var allSettings = [];
+async function loadSettings(){
+  var { data, error } = await sb.from('pyro_settings_master').select('*');
+  if(error){ edToast('설정 불러오기 실패: ' + error.message); return; }
+  allSettings = (data || []).filter(r => r.is_active !== false);
+  var put = (id, k, mul) => { var v = setVal(k); var e = document.getElementById(id); if(e) e.value = v == null ? '' : Math.round(v * (mul || 1) * 100) / 100; };
+  put('cbFee', '매입_기본가공비'); put('cbFreight', '매입_운송비'); put('cbMargin', '매입_목표마진율', 100);
+  put('cbKm', '운송_왕복거리'); put('cbKpl', '운송_연비'); put('cbLoad', '운송_적재량'); put('cbTrip', '운송_회당고정비');
+  freightRef();
+}
+function setVal(k){ var r = allSettings.find(x => x.var_name === k); if(!r || r.var_value == null || r.var_value === '') return null; var n = Number(String(r.var_value).replace(/,/g, '')); return isFinite(n) ? n : null; }
+function numIn(id){ var t = document.getElementById(id).value.replace(/,/g, '').trim(); if(t === '') return null; var n = Number(t); return isFinite(n) ? n : NaN; }
+var SET_META = { '매입_기본가공비':'원/kg', '매입_운송비':'원/kg', '매입_목표마진율':'%', '운송_왕복거리':'km', '운송_연비':'km/L', '운송_적재량':'kg', '운송_회당고정비':'원' };
+async function putSetting(k, v){
+  var r = allSettings.find(x => x.var_name === k);
+  if(r){ if(String(r.var_value) === String(v)) return null; return (await sb.from('pyro_settings_master').update({ var_value: String(v) }).eq('id', r.id)).error; }
+  var no = allSettings.reduce((m, x) => Math.max(m, Number(x.row_no) || 0), 0) + 1;
+  var res = await sb.from('pyro_settings_master').insert({ var_name:k, var_value:String(v), unit:SET_META[k] || null, row_no:no, is_active:true });
+  if(!res.error) allSettings.push({ var_name:k, var_value:String(v), row_no:no });
+  return res.error;
+}
+async function costBarSave(){
+  var vals = { '매입_기본가공비':numIn('cbFee'), '매입_운송비':numIn('cbFreight'), '매입_목표마진율':numIn('cbMargin'), '운송_왕복거리':numIn('cbKm'), '운송_연비':numIn('cbKpl'), '운송_적재량':numIn('cbLoad'), '운송_회당고정비':numIn('cbTrip') };
+  for(var k in vals){ if(Number.isNaN(vals[k]) || (vals[k] != null && vals[k] < 0)){ edToast(k.replace(/_/g, ' ') + ' 숫자 확인'); return; } }
+  if(vals['매입_목표마진율'] != null){ if(vals['매입_목표마진율'] >= 100){ edToast('목표마진은 100% 미만'); return; } vals['매입_목표마진율'] = Math.round(vals['매입_목표마진율'] * 10) / 1000; }
+  var b = document.getElementById('cbSave'); b.disabled = true;
+  for(var k2 in vals){ if(vals[k2] == null) continue; var e = await putSetting(k2, vals[k2]); if(e){ b.disabled = false; edToast('저장 실패: ' + e.message); return; } }
+  b.disabled = false; edToast('저장됨');
+  await loadSettings(); await loadGuides();
+}
+function freightRef(){
+  var km = numIn('cbKm'), kpl = numIn('cbKpl'), load = numIn('cbLoad'), trip = numIn('cbTrip') || 0, el = document.getElementById('cbRef');
+  if(!el) return;
+  if(!km || !kpl || !load || !fuelLatest.diesel){ el.textContent = '-'; el.title = fuelLatest.diesel ? '' : '경유가 없음'; return; }
+  var v = (km / kpl * fuelLatest.diesel + trip) / load;
+  el.textContent = fmt(Math.round(v)) + ' 원/kg'; el.title = '경유 ' + fmt(fuelLatest.diesel) + '원/L 기준';
+}
+
+// ── v1.19: 유류비 (pyro_fuel_prices) ──
+var fuelLatest = { diesel:null, gas:null, date:null };
+async function loadFuel(){
+  var { data, error } = await sb.from('pyro_fuel_prices').select('*').order('price_date', { ascending:false }).limit(20);
+  var set = (id, t) => { var e = document.getElementById(id); if(e) e.textContent = t; };
+  if(error){ set('fuelDate', '불러오기 실패'); return; }
+  var ok = (data || []).filter(r => r.price_krw != null && r.src !== 'error');
+  var d = ok.find(r => r.product === '경유'), g = ok.find(r => r.product === '휘발유');
+  fuelLatest = { diesel: d ? Number(d.price_krw) : null, gas: g ? Number(g.price_krw) : null, date: d ? d.price_date : (g ? g.price_date : null) };
+  set('fuelDiesel', d ? fmt(d.price_krw) : '-'); set('fuelGas', g ? fmt(g.price_krw) : '-');
+  var err = (data || []).find(r => r.src === 'error');
+  set('fuelDate', fuelLatest.date ? fuelLatest.date + (d && d.src ? ' · ' + d.src : '') : (err ? '수집 오류' : ''));
+  freightRef();
+}
+function fuelOpen(){ edOpen('fuel', null, { price_date: todayKst(), diesel: fuelLatest.diesel, gas: fuelLatest.gas }); }
+ED.fuel = {
+  title: '유류비',
+  fields: [
+    { k:'price_date', l:'기준일', t:'date', req:true },
+    { k:'diesel', l:'경유 (원/L)', t:'number', req:true },
+    { k:'gas', l:'휘발유 (원/L)', t:'number', req:true }
+  ],
+  prep: (v) => (v.diesel <= 0 || v.gas <= 0) ? '0보다 커야 함' : null,
+  save: async (v) => sb.from('pyro_fuel_prices').upsert([
+    { price_date:v.price_date, product:'경유', price_krw:v.diesel, src:'수기' },
+    { price_date:v.price_date, product:'휘발유', price_krw:v.gas, src:'수기' }
+  ], { onConflict:'price_date,product' }),
+  reload: loadFuel
+};
+
+// ── v1.19: 등급별 LME 연동 비율 (pyro_grade_lme_map) ──
+var allRatios = [], ratioView = [];
+var LME_CODES = ['CAD','AHD','ZSD','PBD','NID','SND'];
+function lmeSub(m){ return m && m.lme_est_price != null ? ' · LME환산 ' + fmt(m.lme_est_price) + '원' : ''; }
+async function loadRatios(){
+  var { data, error } = await sb.from('pyro_grade_lme_map').select('*').order('lme_code').order('metal');
+  if(error){ loadErr('ratioRows', 8, error); return; }
+  allRatios = (data || []).filter(r => r.is_active !== false);
+  renderRatios();
+}
+function renderRatios(){
+  var tb = document.getElementById('ratioRows'); if(!tb) return;
+  document.getElementById('ratioCount').textContent = allRatios.length;
+  ratioView = allRatios;
+  if(!allRatios.length){ tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px">연동된 품목이 없습니다.</td></tr>'; return; }
+  tb.innerHTML = allRatios.map((r, i) => {
+    var m = allMetals.find(x => x.metal === r.metal) || {};
+    return '<tr class="ed-row" onclick="ratioOpen(' + i + ')"><td><strong>' + edEsc(r.metal) + '</strong></td><td>' + edEsc(r.lme_code) + '</td>'
+      + '<td style="text-align:right;font-weight:700">' + (Number(r.ratio) * 100).toFixed(1) + '%</td>'
+      + '<td style="text-align:right">' + (m.price != null ? fmt(m.price) : '-') + '</td>'
+      + '<td style="text-align:right">' + (m.lme_est_price != null ? fmt(m.lme_est_price) : '-') + '</td>'
+      + '<td>' + edEsc(r.ratio_date || '-') + '</td><td><span class="src-badge' + (r.ratio_src === 'manual' ? '' : ' lme') + '">' + (r.ratio_src === 'manual' ? '수동' : '자동') + '</span></td>'
+      + '<td style="font-size:11px;color:var(--text-muted)">' + edEsc(r.memo || '') + '</td></tr>';
+  }).join('');
+}
+function ratioOpen(i){
+  var row = i == null ? null : ratioView[i];
+  var names = allMetals.map(m => m.metal).filter(n => !allRatios.some(r => r.metal === n));
+  ED.ratio.fields[0].t = row ? 'text' : 'select';
+  ED.ratio.fields[0].opts = names.length ? names : [''];
+  edOpen('ratio', row ? Object.assign({}, row, { ratio_pct: Math.round(Number(row.ratio) * 100000) / 1000, mode: row.ratio_src === 'manual' ? '수동' : '자동' }) : null);
+}
+ED.ratio = {
+  title: 'LME 연동',
+  fields: [
+    { k:'metal', l:'품목', t:'select', opts:[], lock:true, req:true },
+    { k:'lme_code', l:'LME', t:'select', opts:LME_CODES, def:'CAD' },
+    { k:'ratio_pct', l:'비율 (%)', t:'number', req:true },
+    { k:'mode', l:'방식', t:'select', opts:['자동','수동'], def:'수동' },
+    { k:'memo', l:'메모', t:'textarea' }
+  ],
+  prep: (v, o) => {
+    if(v.ratio_pct !== undefined){
+      if(!(v.ratio_pct > 0 && v.ratio_pct <= 150)) return '비율은 0 초과 150 이하 (%)';
+      v.ratio = Math.round(v.ratio_pct * 1000) / 100000;
+      if(v.mode === undefined && o) v.mode = '수동';
+    }
+    if(v.mode !== undefined) v.ratio_src = v.mode === '수동' ? 'manual' : 'auto';
+    if(v.ratio !== undefined) v.ratio_date = todayKst();
+    delete v.ratio_pct; delete v.mode;
+    if(!o){ if(!v.metal) return '품목 선택 필요'; v.is_active = true; }
+    return null;
+  },
+  save: async (v, o) => o ? sb.from('pyro_grade_lme_map').update(v).eq('metal', o.metal) : sb.from('pyro_grade_lme_map').insert(v),
+  removeLabel: '연동 해제',
+  remove: async (o) => sb.from('pyro_grade_lme_map').update({ is_active:false }).eq('metal', o.metal),
+  reload: async () => { await loadRatios(); await loadMetals(); renderRatios(); await loadGuides(); }
+};
+
+// ── v1.19: 출자·인출 (pyro_jv_save, 2줄) ──
+var ownerKind = 'in';
+function ownerOpen(k){ ownerKind = k; ED.owner.title = k === 'in' ? '출자' : '인출'; edOpen('owner', null, { partner:'황병승' }); }
+ED.owner = {
+  title: '출자',
+  fields: [
+    { k:'jv_date', l:'일자', t:'date', req:true, def:todayKst },
+    { k:'amt', l:'금액 (원)', t:'number', req:true },
+    { k:'partner', l:'상대방', t:'text' },
+    { k:'memo', l:'적요', t:'text' }
+  ],
+  prep: (v) => v.amt > 0 ? null : '금액은 0보다 커야 함',
+  save: async (v) => {
+    var inv = ownerKind === 'in', own = inv ? { account:'(사업주)출자금', dr_amt:0, cr_amt:v.amt, pl_code:'Z910' } : { account:'(사업주)인출금', dr_amt:v.amt, cr_amt:0, pl_code:'Z900' };
+    var bank = { account:'보통예금', dr_amt: inv ? v.amt : 0, cr_amt: inv ? 0 : v.amt, pl_code:null };
+    var res = await sb.rpc('pyro_jv_save', { p: { jv_no:null, jv_date:v.jv_date, div_code:'CM', partner:v.partner, memo:v.memo || (inv ? '출자' : '인출'), evidence:null, lines: inv ? [bank, own] : [own, bank] } });
+    if(!res.error && res.data && res.data.ok === false) return { error:{ message: res.data.error || '저장 실패' } };
+    return res;
+  },
+  reload: async () => { await reloadOwner(); }
+};
+async function reloadOwner(){
+  var r = await sb.from('pyro_owner_account').select('*').order('tx_date', { ascending: true });
+  if(r.data){ allOwnerAcc = r.data; renderOwnerAcc(allOwnerAcc); }
+  var p = await sb.from('pyro_div_pl').select('*').order('yr', { ascending: false }).order('mo', { ascending: false });
+  if(p.data){ allDivPl = p.data; renderDivPl(allDivPl); renderDivSummary(); renderDivTargets(); }
+  await loadJournal(); renderInterestKpi();
+}
+
 // ── v1.18: 공통 로드 오류 표시 ──
 function loadErr(tbodyId, cols, error){
   var tb = document.getElementById(tbodyId);
@@ -1594,9 +1785,9 @@ ED.guide = {
     { k:'conductor', l:'도체', t:'text' },
     { k:'price_ref', l:'적용 시세', t:'select', opts:GUIDE_REF_BASE, def:'상동' },
     { k:'yield_pct', l:'수율 (%)', t:'number', req:true },
-    { k:'fee', l:'가공비 (원/kg)', t:'number', def:400 },
-    { k:'freight', l:'운송비 (원/kg)', t:'number', def:80 },
-    { k:'margin_pct', l:'목표마진 (%)', t:'number', def:25 },
+    { k:'fee', l:'가공비 (원/kg)', t:'number', def:() => setVal('매입_기본가공비') },
+    { k:'freight', l:'운송비 (원/kg)', t:'number', def:() => setVal('매입_운송비') },
+    { k:'margin_pct', l:'목표마진 (%)', t:'number', def:() => { var m = setVal('매입_목표마진율'); return m == null ? null : Math.round(m * 1000) / 10; } },
     { k:'row_no', l:'순번', t:'number', def:guideNextNo },
     { k:'memo', l:'용도/메모', t:'textarea' }
   ],
@@ -1851,6 +2042,7 @@ function jvOpen(jvNo){
     var f = lines[0];
     h = { jv_no:f.jv_no, jv_date:f.jv_date, div_code:f.div_code || '', partner:f.partner || '', memo:f.memo || '', evidence:f.evidence || '' };
     lines = lines.map(r => ({ account:r.account || '', dr_amt:Number(r.dr_amt) || 0, cr_amt:Number(r.cr_amt) || 0, pl_code:r.pl_code || '' }));
+    if(lines.length === 1) lines.push({ account:'보통예금', dr_amt:lines[0].cr_amt, cr_amt:lines[0].dr_amt, pl_code:'' });
   } else {
     lines = [{ account:'', dr_amt:'', cr_amt:'', pl_code:'' }, { account:'', dr_amt:'', cr_amt:'', pl_code:'' }];
   }
@@ -2052,9 +2244,8 @@ async function loadLots(){
     var q = document.getElementById('lotSearch');
     if(q && q.value.trim()) filterLots(); else renderLots(allLots);
     var totalSales = allLots.reduce((acc, l) => acc + (Number(l.sell_total) || 0), 0);
-    if(totalSales > 0){
-      document.getElementById('kpiMfTotalSales').innerText = fmt(totalSales) + ' 원';
-    }
+    document.getElementById('kpiMfTotalSales').innerText = fmt(totalSales) + ' 원';
+    var sub = document.getElementById('kpiMfTotalSalesSub'); if(sub) sub.textContent = '로트 ' + allLots.filter(l => Number(l.sell_total) > 0).length + '건 매각 합계';
   }
 }
 
@@ -2067,17 +2258,17 @@ async function loadMetals(){
       var aDong = allMetals.find(m => m.metal.includes('A동') || m.metal === 'A동');
       if(aDong){
         document.getElementById('kpiPriceAdong').innerText = fmt(aDong.price) + ' 원/kg';
-        document.getElementById('kpiPriceAdongDate').innerText = '기준일: ' + aDong.price_date + ' (' + (aDong.grade||'시세') + ')';
+        document.getElementById('kpiPriceAdongDate').innerText = '기준일: ' + aDong.price_date + lmeSub(aDong);
       }
       var sangDong = allMetals.find(m => m.metal.includes('상동'));
       if(sangDong){
         document.getElementById('kpiPriceSangdong').innerText = fmt(sangDong.price) + ' 원/kg';
-        document.getElementById('kpiPriceSangdongDate').innerText = '기준일: ' + sangDong.price_date + ' (' + (sangDong.grade||'시세') + ')';
+        document.getElementById('kpiPriceSangdongDate').innerText = '기준일: ' + sangDong.price_date + lmeSub(sangDong);
       }
       var alSash = allMetals.find(m => m.metal.includes('AL샤시') || m.metal.includes('AL 샤시'));
       if(alSash){
         document.getElementById('kpiPriceAl').innerText = fmt(alSash.price) + ' 원/kg';
-        document.getElementById('kpiPriceAlDate').innerText = '기준일: ' + alSash.price_date + ' (' + (alSash.grade||'시세') + ')';
+        document.getElementById('kpiPriceAlDate').innerText = '기준일: ' + alSash.price_date + lmeSub(alSash);
       }
     }
 }
@@ -2086,8 +2277,11 @@ async function loadAllData(){
   loadLme();
   if(!lmeTimer) lmeTimer = setInterval(loadLme, 5 * 60 * 1000);
   try {
-    // 1. 금속 최신 시세판
+    // 1. 금속 최신 시세판 · 연동 비율 · 설정 · 유류비
+    await loadSettings();
     await loadMetals();
+    loadRatios();
+    loadFuel();
 
     // 2. 규격 마스터
     await loadGuides();
@@ -2361,7 +2555,7 @@ function renderMetals(rows){
   var tbody = document.getElementById('metalTableBody');
   document.getElementById('metalCount').innerText = rows.length;
   if(!rows || rows.length === 0){
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px">등록된 금속 시세가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px">등록된 금속 시세가 없습니다.</td></tr>';
     return;
   }
   metalView = rows;
@@ -2369,6 +2563,7 @@ function renderMetals(rows){
     <tr class="ed-row" onclick="edOpen('metal', metalView[${i}])">
       <td><strong>${r.metal}</strong></td>
       <td class="amt-plus">${fmt(r.price)} 원</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums" title="${r.lme_code ? r.lme_code + ' × ' + (Number(r.ratio) * 100).toFixed(1) + '%' : ''}">${r.lme_est_price != null ? fmt(r.lme_est_price) + ' 원' : '<span style="color:var(--text-muted)">-</span>'}</td>
       <td style="color:var(--text-muted)">${r.unit || 'KRW/kg'}</td>
       <td style="font-variant-numeric:tabular-nums">${r.price_date || '-'}</td>
       <td><span class="badge">${r.grade || '일반'}</span></td>
@@ -2398,7 +2593,9 @@ function onCalcSpecChange(){
   var item = allGuides.find(g => g.spec === spec);
   if(!item) return;
 
-  document.getElementById('calcLivePrice').value = fmt(item.live_price) + ' 원/kg (' + (item.live_date || '최신') + ')';
+  document.getElementById('calcLivePrice').value = fmt(item.live_price) + ' 원/kg' + (item.live_src === 'LME연동' ? ' (LME ' + fmt(item.lme_krw) + ' × ' + (Number(item.ratio) * 100).toFixed(1) + '%)' : ' (국내 ' + (item.live_date || '') + ')');
+  document.getElementById('calcBreakLbl').textContent = '손익분기 매입가 (가공·운송 ' + fmt(item.unit_cost) + '원 차감)';
+  var mg = setVal('매입_목표마진율'); document.getElementById('calcGuideLbl').textContent = '★ 현장 권장 매입가' + (mg != null ? ' (목표마진 ' + Math.round(mg * 1000) / 10 + '%)' : '');
   document.getElementById('calcYield').value = (item.yield_pct || '0') + ' %';
   recalcMfQuote();
 }
@@ -2444,7 +2641,7 @@ function renderGuides(rows){
       <td>${r.conductor || '-'}</td>
       <td style="text-align:right;font-weight:700">${r.yield_pct}%</td>
       <td class="amt-neutral">${fmt(r.live_price)} 원</td>
-      <td style="font-size:11px;color:var(--text-muted)">${r.live_date || '-'}</td>
+      <td>${r.live_src === 'LME연동' ? '<span class="src-badge lme" title="LME ' + fmt(r.lme_krw) + ' × ' + (Number(r.ratio) * 100).toFixed(1) + '%">LME ' + (Number(r.ratio) * 100).toFixed(1) + '%</span>' : '<span class="src-badge">국내 ' + edEsc(r.live_date || '') + '</span>'}</td>
       <td class="amt-neutral">${fmt(r.recover_value)}</td>
       <td class="amt-neutral">${fmt(r.breakeven_buy)}</td>
       <td class="amt-plus" style="font-size:13.5px">${fmt(r.guide_buy)} 원</td>
