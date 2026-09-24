@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PYRO ERP v1.14 · 파이로 고물상(MF)·제조·유통 콕핏</title>
+<title>PYRO ERP v1.15 · 파이로 고물상(MF)·제조·유통 콕핏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -67,6 +67,36 @@ header{background:#111827;border-bottom:1px solid var(--border);padding:10px 20p
 .nav-btn:hover{background:#334155;color:#fff}
 .nav-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
 
+/* Shell (v1.15 좌측 메뉴) */
+#shell{display:grid;grid-template-columns:var(--sbw,232px) 1fr;min-height:100vh;transition:grid-template-columns .18s}
+#shell.sb-min{--sbw:64px}
+#sb{position:sticky;top:0;height:100vh;background:#0b1120;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:60}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.sb-nm{font-weight:700;font-size:14px}.sb-nm small{display:block;font-weight:400;font-size:11px;color:var(--text-muted)}
+.sb-nav{flex:1;overflow:auto;padding:8px}
+.sb-grp{font-size:11px;color:var(--text-muted);padding:12px 10px 4px;white-space:nowrap;letter-spacing:.03em}
+#sb .tab-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border-bottom:none;font-size:13px}
+#sb .tab-item .ic{width:20px;text-align:center;flex:none}
+#sb .tab-item:hover{background:rgba(255,255,255,.04)}
+#sb .tab-item.active{background:var(--accent-light);color:var(--accent)}
+.sb-foot{padding:8px;border-top:1px solid var(--border)}
+#shell.sb-min .sb-nm,#shell.sb-min .sb-grp,#shell.sb-min #sb .tab-item .lb{display:none}
+#shell.sb-min #sb .tab-item{justify-content:center}
+#mainCol{min-width:0}
+.top-l{display:flex;align-items:center;gap:10px}
+.top-ttl{font-weight:700;font-size:15px}
+.mob-only{display:none!important}
+#sbDim{display:none}
+html[data-theme="light"] #sb{background:#fff}
+html[data-theme="light"] #sb .tab-item:hover{background:#f1f5f9}
+@media (max-width:900px){
+  #shell{grid-template-columns:1fr}
+  #sb{position:fixed;left:0;top:0;bottom:0;width:240px;transform:translateX(-100%);transition:transform .18s}
+  #shell.mob-open #sb{transform:none}
+  #shell.mob-open #sbDim{display:block;position:fixed;inset:0;background:rgba(2,6,23,.5);z-index:55}
+  .mob-only{display:inline-flex!important}
+  header .nav-links{flex-wrap:wrap;justify-content:flex-end}
+}
 /* Tab Bar */
 .tab-bar{background:#0b1120;border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:4px;overflow-x:auto}
 .tab-item{padding:12px 16px;color:var(--text-muted);font-weight:600;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
@@ -233,20 +263,37 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
 <!-- ── 메인 콕핏 앱 셸 (로그인 인증 후 노출) ── -->
 <div id="app" class="hide">
 
+<div id="shell">
+<aside id="sb">
+  <div class="sb-brand"><div class="logo">PY</div><div class="sb-nm">파이로 콕핏 <span class="badge">v1.15</span><small>개인사업자 파이로</small></div></div>
+  <nav class="sb-nav" id="sbNav">
+    <div class="sb-grp">고물상 · 비철</div>
+    <div class="tab-item active" data-tab="mf" onclick="switchTab('mf')"><span class="ic">🪙</span><span class="lb">비철 시세 관제</span></div>
+    <div class="tab-item" data-tab="mf-guide" onclick="switchTab('mf-guide')"><span class="ic">🎯</span><span class="lb">현장 매입 견적기</span></div>
+    <div class="tab-item" data-tab="mf-lots" onclick="switchTab('mf-lots')"><span class="ic">📦</span><span class="lb">로트 진행판</span></div>
+    <div class="sb-grp">회계 · 자금</div>
+    <div class="tab-item" data-tab="div-pl" onclick="switchTab('div-pl')"><span class="ic">📊</span><span class="lb">사업부 손익 · 자금</span></div>
+    <div class="tab-item" data-tab="journal" onclick="switchTab('journal')"><span class="ic">📑</span><span class="lb">전표 원장</span></div>
+    <div class="tab-item" data-tab="bank" onclick="switchTab('bank')"><span class="ic">🏦</span><span class="lb">통장 원장</span></div>
+    <div class="tab-item" data-tab="tax-invoices" onclick="switchTab('tax-invoices')"><span class="ic">🧾</span><span class="lb">세금계산서</span></div>
+    <div class="sb-grp">제조 · 유통</div>
+    <div class="tab-item" data-tab="tools" onclick="switchTab('tools')"><span class="ic">🔧</span><span class="lb">공구온 · B2B</span></div>
+    <div class="tab-item" data-tab="cost" onclick="switchTab('cost')"><span class="ic">🏭</span><span class="lb">튜브 · 사출 원가</span></div>
+    <div class="tab-item" data-tab="vendor" onclick="switchTab('vendor')"><span class="ic">📋</span><span class="lb">협력 거래처 단가표</span></div>
+    <div class="sb-grp">관리</div>
+    <div class="tab-item" data-tab="governance" onclick="switchTab('governance')"><span class="ic">🏛️</span><span class="lb">거버넌스 · 세무</span></div>
+  </nav>
+  <div class="sb-foot"><button class="nav-btn" onclick="toggleSb()" title="메뉴 접기/펴기" aria-label="메뉴 접기/펴기">⇤</button></div>
+</aside>
+<div id="sbDim" onclick="closeMobSb()"></div>
+<div id="mainCol">
 <header>
-  <div class="brand">
-    <div class="logo">PY</div>
-    <div>
-      <div class="brand-title">파이로 콕핏 <span class="badge">PYRO v1.14</span></div>
-      <div style="font-size:11px;color:var(--text-muted)">개인사업자 파이로 (PYRO)</div>
-    </div>
-  </div>
+  <div class="top-l"><button class="nav-btn mob-only" onclick="openMobSb()" aria-label="메뉴">☰</button><div class="top-ttl" id="topTitle">비철 시세 관제</div></div>
   <div class="nav-links">
     <a href="https://bvs-erp.github.io/index.html" class="nav-btn">🌐 통합허브</a>
     <a href="https://bvs-erp.github.io/erp.html" class="nav-btn">🔵 BVS</a>
     <a href="https://bvs-erp.github.io/ssjg.html" class="nav-btn">🔴 SSJG</a>
-    <a href="https://goscrap.github.io/" class="nav-btn active">🟢 PYRO</a>
-    <a href="https://bvs-erp.github.io/worker.html" target="_blank" rel="noopener noreferrer" class="nav-btn" style="border-color:rgba(59,130,246,0.5);color:#60a5fa" title="현장 근로자/리드 공수 ERP (새 탭)">👷 공수 ERP</a>
+        <a href="https://bvs-erp.github.io/worker.html" target="_blank" rel="noopener noreferrer" class="nav-btn" style="border-color:rgba(59,130,246,0.5);color:#60a5fa" title="현장 근로자/리드 공수 ERP (새 탭)">👷 공수 ERP</a>
     <button class="nav-btn" onclick="toggleTheme()" title="테마 전환 (라이트/다크)">🌓 테마</button>
     <div id="userBadge" style="display:flex;align-items:center;gap:6px;margin-left:8px;padding-left:8px;border-left:1px solid var(--border)">
       <span id="userEmail" style="font-size:11px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis">인증 확인중</span>
@@ -254,21 +301,6 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
     </div>
   </div>
 </header>
-
-<div class="tab-bar">
-  <div class="tab-item active" onclick="switchTab('mf')">🪙 고물상·비철 관제 (MF)</div>
-  <div class="tab-item" onclick="switchTab('mf-guide')">🎯 현장 매입 견적기 (67종)</div>
-  <div class="tab-item" onclick="switchTab('mf-lots')">📦 로트 진행판 (27건)</div>
-  <div class="tab-item" onclick="switchTab('div-pl')">📊 사업부 손익 & 자금관제</div>
-  <div class="tab-item" onclick="switchTab('journal')">📑 전표 원장 (152건)</div>
-  <div class="tab-item" onclick="switchTab('bank')">🏦 통장 원장 (77건)</div>
-  <div class="tab-item" onclick="switchTab('tax-invoices')">🧾 세금계산서 (29건)</div>
-  <div class="tab-item" onclick="switchTab('tools')">🔧 24 공구온 & B2B 마스터</div>
-  <div class="tab-item" onclick="switchTab('cost')">🏭 25 튜브·사출 원가 계산기</div>
-  <div class="tab-item" onclick="switchTab('vendor')">📋 협력 거래처 단가표</div>
-  <div class="tab-item" onclick="switchTab('governance')">🏛️ 사업자 거버넌스 & 세무</div>
-</div>
-
 <div class="container">
 
   <!-- TAB 1: 고물상·비철 관제 (MF) 종합 & 금속 시세판 -->
@@ -1020,6 +1052,8 @@ html[data-theme="light"] .ed-f .input,html[data-theme="light"] .ed-f .select{bac
   개인사업자 파이로 · 사업자등록번호 396-03-01522 · 대표 황병승 · HBS MASTER COCKPIT 연계 시스템
 </footer>
 
+</div><!-- #mainCol -->
+</div><!-- #shell -->
 </div> <!-- #app -->
 
 <script>
@@ -1387,7 +1421,10 @@ ED.ti = {
     { k:'settle_status', l:'정산상태', t:'text' },
     { k:'approval_no', l:'승인번호', t:'text' }
   ],
-  onOpen: () => {
+  lockRow: (r) => r.source === 'hometax' ? ['flow','write_date','issue_date','supplier','buyer','supply_amt','vat_amt','total_amt','ti_type','approval_no'] : null,
+  noRemove: (r) => r.source === 'hometax',
+  onOpen: (row) => {
+    if(row && row.source === 'hometax') return;
     var s = document.getElementById('ed_supply_amt'), v = document.getElementById('ed_vat_amt'), tt = document.getElementById('ed_total_amt');
     var num = x => { var n = Number(String(x).replace(/,/g, '')); return isFinite(n) ? n : null; };
     var auto = { vat: !v.value, tot: !tt.value };
@@ -1553,7 +1590,8 @@ async function edOpen(kind, row, preset){
     + '<div class="ed-head"><span>' + edEsc(cfg.title) + (isEdit ? ' 수정' : ' 추가') + '</span><button class="ed-x" onclick="edClose()" aria-label="닫기">×</button></div>'
     + '<div class="ed-body">'
     + cfg.fields.map(function(f){
-        var ro = ((isEdit && f.lock) || (!isEdit && f.lockPreset && preset[f.k] != null)) ? ' readonly' : '';
+        var rowLock = isEdit && cfg.lockRow ? cfg.lockRow(row) : null;
+        var ro = ((isEdit && f.lock) || (!isEdit && f.lockPreset && preset[f.k] != null) || (rowLock && rowLock.indexOf(f.k) >= 0)) ? ' readonly' : '';
         var input;
         if(f.t === 'select'){
           input = '<select class="select" id="ed_' + f.k + '"' + (ro ? ' disabled' : '') + '>' + f.opts.map(function(o){ return '<option' + (String(val(f))===o ? ' selected' : '') + '>' + edEsc(o) + '</option>'; }).join('') + '</select>';
@@ -1566,7 +1604,7 @@ async function edOpen(kind, row, preset){
       }).join('')
     + '<div id="edAfter"></div><div class="ed-err" id="edErr"></div></div>'
     + '<div class="ed-foot">'
-    + (isEdit && cfg.remove ? '<button class="btn btn-danger" id="edDel" onclick="edDelete()">' + (cfg.removeLabel || '삭제') + '</button>' : '')
+    + (isEdit && cfg.remove && !(cfg.noRemove && cfg.noRemove(row)) ? '<button class="btn btn-danger" id="edDel" onclick="edDelete()">' + (cfg.removeLabel || '삭제') + '</button>' : '')
     + '<span class="sp"></span><button class="btn btn-ghost" onclick="edClose()">취소</button>'
     + '<button class="btn btn-primary" id="edSave" onclick="edSave()">저장</button></div>'
     + '</div></div>';
@@ -2180,12 +2218,29 @@ function recalcCost(){
 }
 
 function switchTab(tabId){
-  document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('#sb .tab-item').forEach(el => el.classList.toggle('active', el.dataset.tab === tabId));
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-  event.target.classList.add('active');
   var target = document.getElementById('tab-' + tabId);
   if(target) target.classList.add('active');
+  var it = document.querySelector('#sb .tab-item[data-tab="' + tabId + '"] .lb');
+  if(it) document.getElementById('topTitle').textContent = it.textContent;
+  try { localStorage.setItem('pyro_tab', tabId); } catch(e){}
+  closeMobSb();
+  window.scrollTo(0, 0);
 }
+function toggleSb(){
+  var s = document.getElementById('shell'); s.classList.toggle('sb-min');
+  try { localStorage.setItem('pyro_sbmin', s.classList.contains('sb-min') ? '1' : ''); } catch(e){}
+}
+function openMobSb(){ document.getElementById('shell').classList.add('mob-open'); }
+function closeMobSb(){ var s = document.getElementById('shell'); if(s) s.classList.remove('mob-open'); }
+(function(){
+  try {
+    if(localStorage.getItem('pyro_sbmin')) document.getElementById('shell').classList.add('sb-min');
+    var last = localStorage.getItem('pyro_tab');
+    if(last && document.getElementById('tab-' + last)) switchTab(last);
+  } catch(e){}
+})();
 
 function fmt(n){
   if(n === null || n === undefined) return '0';
