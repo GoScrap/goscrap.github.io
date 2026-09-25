@@ -2076,8 +2076,11 @@ function renderVatSum(){
   var tb = document.getElementById('vsRows'); if(!tb) return;
   var ys = document.getElementById('vsYear'), yrs = {};
   allTaxInvoices.forEach(function(r){ if(r.write_date) yrs[String(r.write_date).slice(0, 4)] = 1; }); yrs[todayKst().slice(0, 4)] = 1;
-  if(ys && !ys.options.length){ Object.keys(yrs).sort().reverse().forEach(function(y){ var o = document.createElement('option'); o.value = y; o.textContent = y + '년'; ys.appendChild(o); });
-    var hf = document.getElementById('vsHalf'); if(hf) hf.value = Number(todayKst().slice(5, 7)) <= 6 ? '1' : '2'; }
+  var yl = Object.keys(yrs).sort().reverse();
+  if(ys && [].map.call(ys.options, function(o){ return o.value; }).join() !== yl.join()){ var first = !ys.options.length, prev = ys.value; ys.innerHTML = '';
+    yl.forEach(function(y){ var o = document.createElement('option'); o.value = y; o.textContent = y + '년'; ys.appendChild(o); });
+    ys.value = yl.indexOf(prev) >= 0 ? prev : todayKst().slice(0, 4);
+    if(first){ var hf = document.getElementById('vsHalf'); if(hf) hf.value = Number(todayKst().slice(5, 7)) <= 6 ? '1' : '2'; } }
   var y = ys ? ys.value : todayKst().slice(0, 4), half = (document.getElementById('vsHalf') || {}).value || '0';
   var rows = allTaxInvoices.filter(function(r){ var d = String(r.write_date || ''), m = Number(d.slice(5, 7)); if(d.slice(0, 4) !== y) return false; if(half === '1' && m > 6) return false; if(half === '2' && m < 7) return false;
     var card = r.ti_type === '카드' || r.ti_type === '현금영수증';
