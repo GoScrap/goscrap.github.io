@@ -1509,7 +1509,7 @@ async function loadTaxInvoices(){
   var { data } = await sb.from('pyro_tax_invoices').select('*').order('write_date', { ascending: false });
   if(data){
     allTaxInvoices = data.filter(r => !r.is_void && r.status !== 'void');
-    filterTaxInvoices();
+    filterTaxInvoices(); renderVatSum();
     if(typeof allVatData !== 'undefined' && allVatData.length) renderVatCard(allVatData);
   }
 }
