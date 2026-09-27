@@ -1364,28 +1364,28 @@ body.has-sbar{padding-bottom:30px}
 <nav id="mnav">
   <div class="mi on" onclick="mobGoTab('todo')">
     <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/></svg>
-    <span>?곹솴??/span>
+    <span>상황판</span>
     <span class="bd" id="mobAlertBadge" style="display:none">0</span>
   </div>
   <div class="mi" onclick="mobGoTab('tools')">
     <svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>
-    <span>?곸뾽</span>
+    <span>영업</span>
   </div>
   <div class="mi" onclick="mobGoTab('mf')">
     <svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg>
-    <span>援щℓ/?먯옱</span>
+    <span>구매/자재</span>
   </div>
   <div class="mi" onclick="mobGoTab('journal')">
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 3 5-6"/></svg>
-    <span>?뚭퀎</span>
+    <span>회계</span>
   </div>
   <div class="mi" onclick="mobGoTab('bank')">
     <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
-    <span>?먭툑</span>
+    <span>자금</span>
   </div>
   <div class="mi" onclick="openMobMenu()">
     <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-    <span>?꾩껜</span>
+    <span>전체</span>
   </div>
 </nav>
 
@@ -1394,12 +1394,12 @@ body.has-sbar{padding-bottom:30px}
     <div class="mob-menu-hdr">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#16a34a"></span>
-        <b style="font-size:15px;color:var(--accent,#15803d);font-weight:800;letter-spacing:-.02em">PYRO ERP</b>
+        <b>PYRO ERP</b>
       </div>
-      <button class="btn" style="padding:3px 8px;min-height:auto;font-size:14px;border:none;background:transparent;cursor:pointer" onclick="closeMobMenu()">??/button>
+      <button class="btn" style="padding:3px 8px;min-height:auto;font-size:14px;border:none;background:transparent;cursor:pointer" onclick="closeMobMenu()">✕</button>
     </div>
     <div class="mob-menu-q">
-      <input id="mobQ" class="input" placeholder="硫붾돱 寃??(Ctrl+K)" autocomplete="off" oninput="mobMenuFilter(this.value)" onkeydown="mobQKey(event)">
+      <input id="mobQ" class="input" placeholder="메뉴 검색 (Ctrl+K)" autocomplete="off" oninput="mobMenuFilter(this.value)" onkeydown="mobQKey(event)">
     </div>
     <div class="mob-menu-list" id="mobMenuList"></div>
   </div>
@@ -3461,12 +3461,12 @@ MENU.forEach(function(mo, mi){ mo.g.forEach(function(gr){ gr.i.forEach(function(
 var HOME_TAB = 'todo', OPEN_TABS = [HOME_TAB], CUR_MOD = MENU_IDX[HOME_TAB].m;
 // ?? [v1.41 BVS ?쒖?] 紐⑤컮???섎떒 ?ㅻ퉬寃뚯씠??諛??꾩껜 硫붾돱 ?쒕줈??濡쒖쭅 ??
 var MOB_TABS = [
-  { id: 'todo', t: '?곹솴??, ic: '<path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/>', tab: 'todo' },
-  { id: 'sales', t: '?곸뾽', ic: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/>', tab: 'tools' },
-  { id: 'buy', t: '援щℓ/?먯옱', ic: '<path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/>', tab: 'mf' },
-  { id: 'acc', t: '?뚭퀎', ic: '<path d="M3 3v18h18M7 14l4-4 4 3 5-6"/>', tab: 'journal' },
-  { id: 'bank', t: '?먭툑', ic: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>', tab: 'bank' },
-  { id: 'all', t: '?꾩껜', ic: '<path d="M3 12h18M3 6h18M3 18h18"/>', act: 'all' }
+  { id: 'todo', t: '상황판', ic: '<path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/>', tab: 'todo' },
+  { id: 'sales', t: '영업', ic: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/>', tab: 'tools' },
+  { id: 'buy', t: '구매/자재', ic: '<path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/>', tab: 'mf' },
+  { id: 'acc', t: '회계', ic: '<path d="M3 3v18h18M7 14l4-4 4 3 5-6"/>', tab: 'journal' },
+  { id: 'bank', t: '자금', ic: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>', tab: 'bank' },
+  { id: 'all', t: '전체', ic: '<path d="M3 12h18M3 6h18M3 18h18"/>', act: 'all' }
 ];
 
 function getTodoAlertCount(){
