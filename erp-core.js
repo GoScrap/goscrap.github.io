@@ -1,4 +1,4 @@
-/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.00 (2026-09-28)
+/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.01 (2026-09-28)
  * 세 ERP가 같은 파일을 쓴다. bvs-erp.github.io 와 goscrap.github.io 에 똑같은 사본을 둔다(sha256 동일 유지).
  * 원칙: 조회 실패·건수 불일치는 조용히 넘기지 않고 오류로 드러낸다. 0원과 '자료 없음'을 구분한다.
  */
@@ -12,6 +12,10 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[c];
     });
   }
+
+  /* HTML 속성(onclick 등) 안의 JS 문자열 값 — 이름에 ' 가 있거나 외부 자료(메일 제목 등)에 따옴표·꺾쇠가 있어도
+   * 스크립트가 깨지거나 주입되지 않는다. 사용: '...onclick="fn('+ERPC.jsq(v)+')"...'  (속성은 반드시 큰따옴표로 감쌀 것) */
+  function jsq(v) { return esc(JSON.stringify(String(v == null ? '' : v))); }
 
   /* 한국 시각 기준 날짜 — 브라우저 시간대와 무관 */
   function kstParts(d) {
@@ -99,5 +103,5 @@
     return m;
   }
 
-  w.ERPC = { version: '1.00', esc: esc, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText };
+  w.ERPC = { version: '1.01', esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText };
 })(window);
