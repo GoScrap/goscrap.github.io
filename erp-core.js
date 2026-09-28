@@ -91,17 +91,27 @@
    * 그러면 '조회 중' 표시가 풀리지 않아 조회 버튼이 먹통이 된다(SSJG 모바일, 2026-09-28).
    * 45초 안에 응답이 없으면 요청을 끊고 오류로 돌려준다 → 화면은 '서버 응답이 늦습니다'를 보여 주고 다시 조회할 수 있다. */
   var FETCH_MS = 45000;
+  /* v1.03: 머리글만 오고 본문이 멈추는 경우(휴대폰 탭 전환·약한 전파)까지 막는다 — 본문을 다 받을 때까지를 45초 안에 끝낸다.
+   * 본문은 여기서 끝까지 읽어 새 Response로 돌려준다(JSON 응답이라 크기 부담 없음). */
+  var NOBODY = { 101: 1, 204: 1, 205: 1, 304: 1 };
   function fetchT(input, init) {
     init = init || {};
     if (typeof AbortController !== 'function') return w.fetch(input, init);
     var ac = new AbortController(), outer = init.signal, t = setTimeout(function () { ac.abort(); }, FETCH_MS);
     if (outer) { if (outer.aborted) ac.abort(); else outer.addEventListener('abort', function () { ac.abort(); }); }
     var opt = {}; for (var k in init) opt[k] = init[k]; opt.signal = ac.signal;
-    return w.fetch(input, opt).then(function (r) { clearTimeout(t); return r; }, function (e) {
+    function fail(e) {
       clearTimeout(t);
       if (ac.signal.aborted && !(outer && outer.aborted)) { var x = new Error('timeout: 서버 응답 ' + (FETCH_MS / 1000) + '초 초과'); x.code = 'ERPC_TIMEOUT'; throw x; }
       throw e;
-    });
+    }
+    return w.fetch(input, opt).then(function (r) {
+      if (NOBODY[r.status] || (opt.method && String(opt.method).toUpperCase() === 'HEAD')) { clearTimeout(t); return r; }
+      return r.arrayBuffer().then(function (buf) {
+        clearTimeout(t);
+        return new Response(buf, { status: r.status, statusText: r.statusText, headers: r.headers });
+      });
+    }).catch(fail);
   }
 
   /* {data,error} 형태가 필요한 곳용 */
@@ -121,5 +131,5 @@
     return m;
   }
 
-  w.ERPC = { version: '1.02', esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText, fetchT: fetchT };
+  w.ERPC = { version: '1.03', esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText, fetchT: fetchT };
 })(window);
