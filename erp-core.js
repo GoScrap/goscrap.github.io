@@ -1,4 +1,4 @@
-/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.01 (2026-09-28)
+/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.02 (2026-09-28)
  * 세 ERP가 같은 파일을 쓴다. bvs-erp.github.io 와 goscrap.github.io 에 똑같은 사본을 둔다(sha256 동일 유지).
  * 원칙: 조회 실패·건수 불일치는 조용히 넘기지 않고 오류로 드러낸다. 0원과 '자료 없음'을 구분한다.
  */
@@ -86,6 +86,24 @@
     return out;
   }
 
+  /* 시간 제한 fetch (v1.02) — createClient(url, key, { global: { fetch: ERPC.fetchT } })
+   * 휴대폰에서 탭을 오가면 백그라운드 탭의 요청이 끝나지도 실패하지도 않은 채 멈출 수 있다.
+   * 그러면 '조회 중' 표시가 풀리지 않아 조회 버튼이 먹통이 된다(SSJG 모바일, 2026-09-28).
+   * 45초 안에 응답이 없으면 요청을 끊고 오류로 돌려준다 → 화면은 '서버 응답이 늦습니다'를 보여 주고 다시 조회할 수 있다. */
+  var FETCH_MS = 45000;
+  function fetchT(input, init) {
+    init = init || {};
+    if (typeof AbortController !== 'function') return w.fetch(input, init);
+    var ac = new AbortController(), outer = init.signal, t = setTimeout(function () { ac.abort(); }, FETCH_MS);
+    if (outer) { if (outer.aborted) ac.abort(); else outer.addEventListener('abort', function () { ac.abort(); }); }
+    var opt = {}; for (var k in init) opt[k] = init[k]; opt.signal = ac.signal;
+    return w.fetch(input, opt).then(function (r) { clearTimeout(t); return r; }, function (e) {
+      clearTimeout(t);
+      if (ac.signal.aborted && !(outer && outer.aborted)) { var x = new Error('timeout: 서버 응답 ' + (FETCH_MS / 1000) + '초 초과'); x.code = 'ERPC_TIMEOUT'; throw x; }
+      throw e;
+    });
+  }
+
   /* {data,error} 형태가 필요한 곳용 */
   async function pageAllR(spec) {
     try { return { data: await pageAll(spec), error: null }; }
@@ -103,5 +121,5 @@
     return m;
   }
 
-  w.ERPC = { version: '1.01', esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText };
+  w.ERPC = { version: '1.02', esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText, fetchT: fetchT };
 })(window);
