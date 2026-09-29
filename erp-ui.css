@@ -1,0 +1,36 @@
+/* erp-ui.css v1.00 — 3사(BVS·SSJG·PYRO) 공통 표준 (260929_전사_ERP3사_통일표준_v1.0 R2)
+   두 저장소(bvs-erp·goscrap)에 같은 바이트로 둔다. 각 화면 <style> 뒤에 불러 토큰을 덮는다.
+   회사 색 = 헌법 1장: HBS 녹색 · PYRO 붉은색 · BVS 파란색 · SSJG 주황색
+   토큰 이름은 두 벌을 같이 채운다: BVS(--ac 강조 · --ac2 옅은 바탕 · --acx 진한 글자 · --rs 선택줄) / SSJG·PYRO(--accent --accent-light --row-sel) */
+:root{--co-hbs:#16a34a;--co-pyro:#dc2626;--co-bvs:#1d4ed8;--co-ssjg:#ea580c;
+  --font-sans:'IBM Plex Sans KR','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif}
+
+/* 밝은 화면 (기본) */
+:root[data-co="bvs"]{--ac:#1d4ed8;--ac2:#e8eefc;--acx:#1e40af;--accent:#1d4ed8;--accent-hover:#1e40af;--accent-light:#e8eefc;--rs:#e8eefc;--row-sel:#e8eefc}
+:root[data-co="ssjg"]{--ac:#ea580c;--ac2:#fff1e6;--acx:#c2410c;--accent:#ea580c;--accent-hover:#c2410c;--accent-light:#fff1e6;--rs:#fff1e6;--row-sel:#fff1e6}
+:root[data-co="pyro"]{--ac:#dc2626;--ac2:#fdecec;--acx:#b91c1c;--accent:#dc2626;--accent-hover:#b91c1c;--accent-light:#fdecec;--rs:#fdecec;--row-sel:#fdecec}
+
+/* 어두운 화면 */
+:root[data-co="bvs"][data-theme="dark"]{--ac:#3b82f6;--ac2:#1b2a40;--acx:#6ea8f0;--accent:#3b82f6;--accent-hover:#60a5fa;--accent-light:rgba(59,130,246,.16);--rs:#1b2a40;--row-sel:#1b2a40}
+:root[data-co="ssjg"][data-theme="dark"]{--ac:#fb923c;--ac2:#3a2414;--acx:#fdba74;--accent:#fb923c;--accent-hover:#fdba74;--accent-light:rgba(251,146,60,.16);--rs:#3a2414;--row-sel:#3a2414}
+:root[data-co="pyro"][data-theme="dark"]{--ac:#f87171;--ac2:#3a1a1a;--acx:#fca5a5;--accent:#f87171;--accent-hover:#fca5a5;--accent-light:rgba(248,113,113,.16);--rs:#3a1a1a;--row-sel:#3a1a1a}
+
+/* 회사 점 (머리줄 회사 전환 버튼) */
+.co-dot{font-style:normal;margin-right:2px}
+.co-dot.bvs{color:var(--co-bvs)}.co-dot.ssjg{color:var(--co-ssjg)}.co-dot.pyro{color:var(--co-pyro)}.co-dot.hbs{color:var(--co-hbs)}
+
+/* 현재 회사 버튼 */
+.nav-btn.active{background:var(--accent-light,var(--ac2));border-color:var(--accent,var(--ac));color:var(--accent,var(--ac));font-weight:700}
+
+/* 상태 배지 — 회사 색과 무관한 의미 색 (차단=빨강 · 초안 검토=파랑 테두리 · 경고=노랑 · 정상=초록 · 마감=회색) */
+.bdg{display:inline-block;font-size:11px;font-weight:600;border-radius:4px;padding:0 6px;line-height:18px;border:1px solid transparent;white-space:nowrap}
+.bdg-block{color:#fff;background:#b42318;border-color:#b42318;font-weight:700}
+.bdg-draft{color:#1f6fd1;background:transparent;border-color:#1f6fd1}
+.bdg-warn{color:#7a4f00;background:#fff4db;border-color:#f2d9a0}
+.bdg-ok{color:#1f7a4d;background:#e7f4ec;border-color:#e7f4ec}
+.bdg-close,.bdg-rp{color:var(--text-muted,var(--tx2));background:transparent;border-color:var(--border,var(--ln))}
+:root[data-theme="dark"] .bdg-draft{color:#6ea8f0;border-color:#6ea8f0}
+:root[data-theme="dark"] .bdg-warn{color:#fcd34d;background:rgba(252,211,77,.12);border-color:rgba(252,211,77,.35)}
+:root[data-theme="dark"] .bdg-ok{color:#6ee7b7;background:rgba(110,231,183,.12);border-color:transparent}
+/* 차대 일치 = 정상(초록) — 회사 색으로 칠하지 않음 */
+.jv-sum .good{color:var(--green,#1a8f5a)}
