@@ -1,4 +1,4 @@
-/* erp-ui.css v1.00 — 3사(BVS·SSJG·PYRO) 공통 표준 (260929_전사_ERP3사_통일표준_v1.0 R2)
+/* erp-ui.css v1.01 — 3사(BVS·SSJG·PYRO) 공통 표준 (260929_전사_ERP3사_통일표준_v1.0 R2)
    두 저장소(bvs-erp·goscrap)에 같은 바이트로 둔다. 각 화면 <style> 뒤에 불러 토큰을 덮는다.
    회사 색 = 헌법 1장: HBS 녹색 · PYRO 붉은색 · BVS 파란색 · SSJG 주황색
    토큰 이름은 두 벌을 같이 채운다: BVS(--ac 강조 · --ac2 옅은 바탕 · --acx 진한 글자 · --rs 선택줄) / SSJG·PYRO(--accent --accent-light --row-sel) */
@@ -34,3 +34,11 @@
 :root[data-theme="dark"] .bdg-ok{color:#6ee7b7;background:rgba(110,231,183,.12);border-color:transparent}
 /* 차대 일치 = 정상(초록) — 회사 색으로 칠하지 않음 */
 .jv-sum .good{color:var(--green,#1a8f5a)}
+
+/* v1.01 목록 인쇄 머리글 (3사 공통, R5) — 화면에선 숨기고 인쇄에서만: 화면 이름 · 회사·사업자번호 · 조회조건 · 출력일시 */
+.prt-head{display:none}
+@media print{
+  .prt-head{display:block;margin:0 0 6mm}
+  .prt-head .ph-t{font-size:15pt;font-weight:700;text-align:center;letter-spacing:6px;margin-bottom:3mm}
+  .prt-head .ph-row{display:flex;justify-content:space-between;gap:8mm;font-size:9pt;border-bottom:1.5px solid #000;padding-bottom:1.5mm}
+}

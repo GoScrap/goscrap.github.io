@@ -1,4 +1,4 @@
-/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.02 (2026-09-28)
+/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.04 (2026-09-29 · v1.04 확인창 ERPC.ask · 알림 ERPC.say — 브라우저 alert/confirm 대신)
  * 세 ERP가 같은 파일을 쓴다. bvs-erp.github.io 와 goscrap.github.io 에 똑같은 사본을 둔다(sha256 동일 유지).
  * 원칙: 조회 실패·건수 불일치는 조용히 넘기지 않고 오류로 드러낸다. 0원과 '자료 없음'을 구분한다.
  */
@@ -131,5 +131,51 @@
     return m;
   }
 
-  w.ERPC = { version: '1.03', esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText, fetchT: fetchT };
+  /* v1.04 확인창·알림 (R5: 3사 alert/confirm 폐지)
+   * ERPC.ask(제목, 내용, {ok:'버튼 글자', danger:true(빨간 버튼), input:true(입력칸), value:'기본값', placeholder}) → Promise: 확인 true(입력칸이면 글자), 취소 null
+   * ERPC.say(내용, 'e'|'g'|'w') → 화면 아래 알림(3초, 오류는 6초). 멈추지 않는다. */
+  var DCSS = '.erpc-bk{position:fixed;inset:0;background:rgba(15,23,42,.38);display:flex;align-items:center;justify-content:center;z-index:10000}'
+    + '.erpc-bx{background:var(--sf,var(--panel,#fff));color:var(--tx,var(--text,#111));border:1px solid var(--ln,var(--border,#d0d5dd));border-radius:8px;min-width:320px;max-width:min(560px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.25);font-size:13.5px}'
+    + '.erpc-bx h4{margin:0;padding:14px 18px 6px;font-size:15px}.erpc-bx .m{padding:4px 18px 12px;white-space:pre-line;line-height:1.55;max-height:50vh;overflow:auto}'
+    + '.erpc-bx input{display:block;width:calc(100% - 36px);margin:0 18px 12px;height:32px;padding:0 10px;border:1px solid var(--ln,var(--border,#d0d5dd));border-radius:4px;font:inherit;background:inherit;color:inherit;box-sizing:border-box}'
+    + '.erpc-bx .f{display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 14px;border-top:1px solid var(--ln2,var(--border,#eee))}'
+    + '.erpc-bx button{height:32px;padding:0 16px;border-radius:4px;border:1px solid var(--ln,var(--border,#d0d5dd));background:inherit;color:inherit;font:inherit;cursor:pointer}'
+    + '.erpc-bx button.p{background:var(--ac,var(--accent,#1d4ed8));border-color:var(--ac,var(--accent,#1d4ed8));color:#fff}.erpc-bx button.d{background:#b42318;border-color:#b42318;color:#fff}'
+    + '.erpc-ts{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;z-index:10001;pointer-events:none}'
+    + '.erpc-t{background:#1f2937;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;max-width:80vw;white-space:pre-line;box-shadow:0 4px 14px rgba(0,0,0,.2)}.erpc-t.e{background:#b42318}.erpc-t.g{background:#1f7a4d}.erpc-t.w{background:#92400e}';
+  function dcss() { if (document.getElementById('erpc-css')) return; var s = document.createElement('style'); s.id = 'erpc-css'; s.textContent = DCSS; document.head.appendChild(s); }
+  function say(msg, kind) {
+    dcss(); var box = document.querySelector('.erpc-ts');
+    if (!box) { box = document.createElement('div'); box.className = 'erpc-ts'; document.body.appendChild(box); }
+    var m = String(msg == null ? '' : msg);
+    if ([].some.call(box.children, function (x) { return x.textContent === m; })) return;
+    var t = document.createElement('div'); t.className = 'erpc-t ' + (kind || ''); t.textContent = m; box.appendChild(t);
+    setTimeout(function () { t.remove(); }, kind === 'e' ? 6000 : 3000);
+  }
+  function ask(title, msg, opt) {
+    opt = opt || {}; dcss();
+    return new Promise(function (res) {
+      var bk = document.createElement('div'); bk.className = 'erpc-bk';
+      bk.innerHTML = '<div class="erpc-bx" role="dialog" aria-modal="true"><h4></h4><div class="m"></div>' + (opt.input ? '<input>' : '')
+        + '<div class="f">' + (opt.hideCancel ? '' : '<button class="n">취소</button>') + '<button class="' + (opt.danger ? 'd' : 'p') + ' y"></button></div></div>';
+      bk.querySelector('h4').textContent = title || '확인'; bk.querySelector('.m').textContent = msg || '';
+      bk.querySelector('.y').textContent = opt.ok || '확인';
+      var inp = bk.querySelector('input'); if (inp) { inp.value = opt.value != null ? opt.value : ''; inp.placeholder = opt.placeholder || ''; }
+      document.body.appendChild(bk);
+      var prev = document.activeElement;
+      function done(v) { document.removeEventListener('keydown', key, true); bk.remove(); try { if (prev && prev.focus) prev.focus(); } catch (e) {} res(v); }
+      function key(e) {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(null); }
+        else if (e.key === 'Enter' && !e.isComposing && (!inp || e.target === inp || !opt.danger)) { e.preventDefault(); e.stopPropagation(); ok(); }
+      }
+      function ok() { done(inp ? (inp.value.trim() || null) : true); }
+      bk.querySelector('.y').onclick = ok;
+      var n = bk.querySelector('.n'); if (n) n.onclick = function () { done(null); };
+      bk.onclick = function (e) { if (e.target === bk) done(null); };
+      document.addEventListener('keydown', key, true);
+      setTimeout(function () { (inp || bk.querySelector(opt.danger ? '.n' : '.y') || bk.querySelector('.y')).focus(); }, 30);
+    });
+  }
+
+  w.ERPC = { version: '1.04', ask: ask, say: say, esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText, fetchT: fetchT };
 })(window);
