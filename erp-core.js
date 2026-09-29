@@ -1,4 +1,4 @@
-/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.04 (2026-09-29 · v1.04 확인창 ERPC.ask · 알림 ERPC.say — 브라우저 alert/confirm 대신)
+/* erp-core.js — BVS · SSJG · PYRO 공통 코어 v1.05 (2026-09-29 · v1.05 바쁠 때 자동 재시도 · v1.04 확인창 ERPC.ask · 알림 ERPC.say — 브라우저 alert/confirm 대신)
  * 세 ERP가 같은 파일을 쓴다. bvs-erp.github.io 와 goscrap.github.io 에 똑같은 사본을 둔다(sha256 동일 유지).
  * 원칙: 조회 실패·건수 불일치는 조용히 넘기지 않고 오류로 드러낸다. 0원과 '자료 없음'을 구분한다.
  */
@@ -94,7 +94,33 @@
   /* v1.03: 머리글만 오고 본문이 멈추는 경우(휴대폰 탭 전환·약한 전파)까지 막는다 — 본문을 다 받을 때까지를 45초 안에 끝낸다.
    * 본문은 여기서 끝까지 읽어 새 Response로 돌려준다(JSON 응답이라 크기 부담 없음). */
   var NOBODY = { 101: 1, 204: 1, 205: 1, 304: 1 };
+  /* v1.05 서버가 잠깐 바쁠 때(스키마 캐시 재적재 PGRST002 · 문장 시간 초과 57014 · 503) 같은 요청을 1.5초·4초 뒤 다시 보낸다.
+   * 두 경우 모두 서버에서 실행되지 않았거나 되돌려진 요청이라 다시 보내도 중복 저장되지 않는다. */
+  /* v1.05 동시 조회 제한 — 화면 하나가 무거운 조회(급여대장·달력·대시보드)를 한꺼번에 5~6개 보내면
+   * 작은 DB에서 서로 CPU를 뺏어 8초 제한에 걸린다(2026-09-29 로그 실측). DB 조회(/rest/v1/)는 동시에 3개까지만 보내고 나머지는 줄 세운다. */
+  var GATE_MAX = 3, gateN = 0, gateQ = [];
+  function gateIn(u) {
+    if (!/\/rest\/v1\//.test(u)) return Promise.resolve(false);
+    if (gateN < GATE_MAX) { gateN++; return Promise.resolve(true); }
+    return new Promise(function (z) { gateQ.push(z); });
+  }
+  function gateOut(held) { if (!held) return; var nx = gateQ.shift(); if (nx) nx(true); else gateN--; }
   function fetchT(input, init) {
+    var tries = 0, url = String((input && input.url) || input || '');
+    function again() {
+      return gateIn(url).then(function (held) {
+        return fetch1(input, init).then(function (r) { gateOut(held); return r; }, function (e) { gateOut(held); throw e; });
+      }).then(function (r) {
+        if (tries >= 2 || !(r.status === 503 || r.status === 500 || r.status === 504)) return r;
+        return r.clone().text().then(function (tx) {
+          if (!/PGRST002|schema cache|57014|statement timeout|canceling statement/i.test(tx || '')) return r;
+          tries++; return new Promise(function (z) { setTimeout(z, tries === 1 ? 1500 : 4000); }).then(again);
+        }, function () { return r; });
+      });
+    }
+    return again();
+  }
+  function fetch1(input, init) {
     init = init || {};
     if (typeof AbortController !== 'function') return w.fetch(input, init);
     var ac = new AbortController(), outer = init.signal, t = setTimeout(function () { ac.abort(); }, FETCH_MS);
@@ -177,5 +203,5 @@
     });
   }
 
-  w.ERPC = { version: '1.04', ask: ask, say: say, esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText, fetchT: fetchT };
+  w.ERPC = { version: '1.05', ask: ask, say: say, esc: esc, jsq: jsq, todayKst: todayKst, ymKst: ymKst, won: won, pageAll: pageAll, pageAllMk: pageAllMk, pageAllR: pageAllR, errText: errText, fetchT: fetchT };
 })(window);
