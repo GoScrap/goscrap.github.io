@@ -1,4 +1,4 @@
-/* erp-grid.js v1.00 — 3사(BVS·SSJG·PYRO) 공통 표 부품 (260929_전사_ERP3사_통일표준 R3)
+/* erp-grid.js v1.01 — 3사(BVS·SSJG·PYRO) 공통 표 부품 (260929_전사_ERP3사_통일표준 R3)
    두 저장소(bvs-erp·goscrap)에 같은 바이트로 둔다.
    화면이 그린 <table>(thead + tbody)을 그대로 두고 기능만 얹는다. tbody를 다시 그려도 상태가 이어진다.
    · 머리칸 누르면 정렬(오름 → 내림 → 원래 순서)
@@ -8,6 +8,7 @@
    · 어댑터(ERPG.adapter)가 줄 → 기록을 알려주는 표만:
        맨 앞 체크 → 위에 선택 막대(N건 선택 · 항목 · 값 · 일괄 수정 · 선택 삭제)
        칸 두 번 눌러 고치고(Enter 아래 · Tab 옆 · Esc 취소) 고친 칸은 노란 테두리 → Ctrl+S 한꺼번에 저장
+   v1.01: BVS 색 이름(--sf 바탕 · --gh 머리)도 받음, ERPG.css()·ERPG.match를 BVS grid()가 같이 씀
    확인창(alert/confirm)은 쓰지 않는다. 되돌릴 수 없는 일은 버튼을 두 번 눌러야 실행된다. */
 (function(){
   'use strict';
@@ -17,13 +18,13 @@
     'table.eg th.eg-th{cursor:pointer;user-select:none}',
     'table.eg th.eg-th[data-sort]::after{content:attr(data-sort);font-size:9px;margin-left:4px;color:var(--accent,var(--ac,#1d4ed8))}',
     '.eg-rz{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:5}',
-    'table.eg tr.eg-fr th{padding:2px 3px!important;background:var(--grid-head,var(--panel-card,#f7f8fa))!important;z-index:4}',
-    '.eg-f{display:block;width:100%;min-width:36px;height:22px;padding:1px 5px;font:inherit;font-size:11.5px;font-weight:400;border:1px solid var(--border,var(--ln,#d0d5dd));border-radius:0;background:var(--panel,var(--bg,#fff));color:inherit;box-sizing:border-box}',
+    'table.eg tr.eg-fr th{padding:2px 3px!important;background:var(--grid-head,var(--gh,var(--panel-card,#f7f8fa)))!important;z-index:4}',
+    '.eg-f{display:block;width:100%;min-width:36px;height:22px;padding:1px 5px;font:inherit;font-size:11.5px;font-weight:400;border:1px solid var(--border,var(--ln,#d0d5dd));border-radius:0;background:var(--panel,var(--sf,#fff));color:inherit;box-sizing:border-box}',
     '.eg-f.on{border-color:var(--accent,var(--ac,#1d4ed8));background:var(--accent-light,var(--ac2,#e8eefc))}',
-    'table.eg th:first-child,table.eg td:first-child{position:sticky;left:0;z-index:2;background:var(--panel,var(--bg,#fff))}',
-    'table.eg thead th:first-child{z-index:6;background:var(--grid-head,var(--panel-card,#f3f5f8))}',
-    'table.eg.eg-sel th:nth-child(2),table.eg.eg-sel td:nth-child(2){position:sticky;left:28px;z-index:2;background:var(--panel,var(--bg,#fff))}',
-    'table.eg.eg-sel thead th:nth-child(2){z-index:6;background:var(--grid-head,var(--panel-card,#f3f5f8))}',
+    'table.eg th:first-child,table.eg td:first-child{position:sticky;left:0;z-index:2;background:var(--panel,var(--sf,#fff))}',
+    'table.eg thead th:first-child{z-index:6;background:var(--grid-head,var(--gh,var(--panel-card,#f3f5f8)))}',
+    'table.eg.eg-sel th:nth-child(2),table.eg.eg-sel td:nth-child(2){position:sticky;left:28px;z-index:2;background:var(--panel,var(--sf,#fff))}',
+    'table.eg.eg-sel thead th:nth-child(2){z-index:6;background:var(--grid-head,var(--gh,var(--panel-card,#f3f5f8)))}',
     'table.eg th.eg-ck,table.eg td.eg-ck{width:28px;min-width:28px;max-width:28px;padding:0 4px!important;text-align:center;cursor:default}',
     'table.eg .eg-ck input{margin:0;cursor:pointer;vertical-align:middle}',
     'table.eg tr.eg-on td,table.eg tr.eg-on td:first-child,table.eg.eg-sel tr.eg-on td:nth-child(2){background:var(--row-sel,var(--rs,#e8eefc))}',
@@ -112,25 +113,35 @@
 
   /* 처음 한 번: 머리칸 정렬·너비 손잡이·필터줄 */
   function init(t){
-    var hr = headRow(t); var s = t._eg = { n: hr.cells.length, sort: null, f: {}, sel: null, picked: {}, dirty: {}, busy: 0, last: null, mo: null, bar: null };
+    var s = t._eg = { n: 0, sort: null, f: {}, sel: null, picked: {}, dirty: {}, busy: 0, last: null, mo: null, bar: null };
     t.classList.add('eg'); t.dataset.eg = '1';
-    Array.prototype.forEach.call(hr.cells, function(th, i){ bindHead(t, th, i); });
-    var fr = document.createElement('tr'); fr.className = 'eg-fr';
-    for(var i = 0; i < s.n; i++){
-      var th = document.createElement('th'), inp = document.createElement('input');
-      inp.className = 'eg-f'; inp.dataset.ci = i; inp.autocomplete = 'off'; inp.title = '글자 포함 · 여러 낱말 = 모두 포함 · !글자 = 제외 · >1000 · <0 · =0';
-      inp.addEventListener('input', function(e){ var ci = +e.target.dataset.ci, v = e.target.value.trim(); if(v) s.f[ci] = v; else delete s.f[ci]; e.target.classList.toggle('on', !!v); apply(t); });
-      inp.addEventListener('click', function(e){ e.stopPropagation(); });
-      inp.addEventListener('keydown', function(e){ if(e.key === 'Escape' && e.target.value){ e.preventDefault(); e.stopPropagation(); e.target.value = ''; e.target.dispatchEvent(new Event('input')); } });
-      th.appendChild(inp); fr.appendChild(th);
-    }
-    t.tHead.appendChild(fr);
+    head(t);
     t.addEventListener('click', onClick, true);
     t.addEventListener('dblclick', onDbl);
     t.addEventListener('keydown', onEditKey);
     s.mo = new MutationObserver(function(){ if(!s.busy) apply(t); });
     observe(t);
     apply(t);
+  }
+  /* 머리 준비: 처음 한 번 + 화면이 표 전체(thead 포함)를 다시 그렸을 때 */
+  function head(t){
+    var s = S(t), hr = headRow(t); if(!hr) return false;
+    var n = Array.prototype.filter.call(hr.cells, function(c){ return !c.classList.contains('eg-ck'); }).length;
+    if(n !== s.n){ s.sort = null; s.f = {}; } s.n = n;
+    if(s.sel && !(hr.cells[0] && hr.cells[0].classList.contains('eg-ck'))){ s.sel = null; t.classList.remove('eg-sel'); }
+    Array.prototype.forEach.call(hr.cells, function(th, i){ if(!th.classList.contains('eg-ck') && th.dataset.egc == null) bindHead(t, th, i - (s.sel ? 1 : 0)); });
+    var fr = document.createElement('tr'); fr.className = 'eg-fr';
+    for(var i = 0; i < s.n; i++){
+      var th = document.createElement('th'), inp = document.createElement('input');
+      inp.className = 'eg-f' + (s.f[i] ? ' on' : ''); inp.dataset.ci = i; inp.autocomplete = 'off'; inp.value = s.f[i] || ''; inp.title = '글자 포함 · 여러 낱말 = 모두 포함 · !글자 = 제외 · >1000 · <0 · =0';
+      inp.addEventListener('input', function(e){ var ci = +e.target.dataset.ci, v = e.target.value.trim(); if(v) s.f[ci] = v; else delete s.f[ci]; e.target.classList.toggle('on', !!v); apply(t); });
+      inp.addEventListener('click', function(e){ e.stopPropagation(); });
+      inp.addEventListener('keydown', function(e){ if(e.key === 'Escape' && e.target.value){ e.preventDefault(); e.stopPropagation(); e.target.value = ''; e.target.dispatchEvent(new Event('input')); } });
+      th.appendChild(inp); fr.appendChild(th);
+    }
+    if(s.sel){ var ck = document.createElement('th'); ck.className = 'eg-ck'; fr.insertBefore(ck, fr.firstChild); }
+    t.tHead.appendChild(fr);
+    return true;
   }
   function observe(t){
     var s = S(t); s.mo.disconnect();
@@ -184,6 +195,7 @@
   function apply(t){
     var s = S(t); if(!s) return;
     quiet(t, function(){
+      if(!t.tHead || !t.tHead.querySelector('tr.eg-fr')){ if(!t.tHead || !head(t)) return; }
       var rows = dataRows(t);
       if(!s.sel && rows.length && recOf(t, rows[0])) enableSel(t);
       rows.forEach(function(r, i){ if(r._egi === undefined) r._egi = i; });
@@ -432,7 +444,8 @@
   }, true);
 
   var ERPG = window.ERPG = {
-    version: '1.00',
+    version: '1.01',
+    css: css,
     adapter: null,
     /* 표 하나에 기능을 얹는다 (여러 번 불러도 한 번만) */
     enhance: function(t){
@@ -445,8 +458,8 @@
     /* root 안의 .table-wrap 표를 모두 */
     auto: function(root, sel){ (root || document).querySelectorAll(sel || '.table-wrap > table').forEach(function(t){ try { if(t._eg) tops(t); else ERPG.enhance(t); } catch(e){ if(window.console) console.warn('erp-grid', e); } }); },
     refresh: function(t){ if(t && t._eg) apply(t); },
-    dirtyTable: function(){ var hit = null; document.querySelectorAll('table.eg').forEach(function(t){ if(!hit && t.offsetParent !== null && nDirty(t)) hit = t; }); return hit; },
-    pickedTable: function(){ var hit = null; document.querySelectorAll('table.eg').forEach(function(t){ if(!hit && t.offsetParent !== null && nPicked(t)) hit = t; }); return hit; },
+    dirtyTable: function(){ var hit = null; document.querySelectorAll('table.eg').forEach(function(t){ if(!hit && t._eg && t.offsetParent !== null && nDirty(t)) hit = t; }); return hit; },
+    pickedTable: function(){ var hit = null; document.querySelectorAll('table.eg').forEach(function(t){ if(!hit && t._eg && t.offsetParent !== null && nPicked(t)) hit = t; }); return hit; },
     save: function(t){ t = t || ERPG.dirtyTable(); if(t) return save(t); },
     /* 선택 막대의 「선택 삭제」를 누른 것과 같다 (두 번 눌러야 실행) */
     removePicked: function(t){ t = t || ERPG.pickedTable(); if(!t || !S(t).bar) return; var b = S(t).bar.querySelector('[data-a="del"]'); if(b) b.click(); },
