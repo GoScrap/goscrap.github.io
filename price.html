@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="1.02">
+<meta name="app-version" content="1.03">
 <meta name="robots" content="noindex, nofollow">
 <title>GoScrap 시세</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,6 +15,9 @@ html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-s
 header{position:sticky;top:0;z-index:5;background:var(--red);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
 header .brand{font-weight:800;font-size:17px;letter-spacing:-.2px}
 header .who{margin-left:auto;font-size:13px;opacity:.95}
+header .top3{flex-basis:100%;font-size:13px;font-weight:700;display:flex;gap:12px;flex-wrap:wrap;padding-top:6px;border-top:1px solid rgba(255,255,255,.25)}
+header .top3 b{font-variant-numeric:tabular-nums}
+header{flex-wrap:wrap}
 header button{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:5px 10px;font-size:13px}
 main{max-width:980px;margin:0 auto;padding:14px 16px 40px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
@@ -88,7 +91,7 @@ textarea{width:100%;font-size:14px;padding:10px;border:1px solid #c9cfd6;border-
   <span class="brand">GoScrap 시세</span>
   <span class="who" id="who"></span>
   <button id="outBtn" class="hide" onclick="logout()">로그아웃</button>
-</header>
+<div class="top3 hide" id="top3"></div></header>
 <main>
   <!-- 로그인 -->
   <section id="login" class="card hide">
@@ -214,7 +217,7 @@ async function boot(){
 }
 
 function showLogin(msg){
-  $('board').classList.add('hide'); $('login').classList.remove('hide'); $('outBtn').classList.add('hide'); $('who').textContent = '';
+  $('board').classList.add('hide'); $('login').classList.remove('hide'); $('top3').classList.add('hide'); $('outBtn').classList.add('hide'); $('who').textContent = '';
   if(msg){ $('lmsg').textContent = msg; $('lmsg').className = 'msg err'; }
   setTimeout(function(){ $('lid').focus(); }, 50);
 }
@@ -295,6 +298,8 @@ function drawKpi(){
   if($('kA').textContent === '-') one(function(m){ return String(m.metal).indexOf('A동') >= 0; }, 'kA', 'kAd');
   one(function(m){ return String(m.metal).indexOf('상동') >= 0; }, 'kS', 'kSd');
   one(function(m){ return /AL ?샤시/.test(String(m.metal)); }, 'kL', 'kLd');
+  var t3 = [['A동', 'kA'], ['상동', 'kS'], ['샤시', 'kL']].map(function(x){ return '<span>' + x[0] + ' <b>' + esc($(x[1]).textContent.replace(' 원/kg', '')) + '</b></span>'; });
+  $('top3').innerHTML = t3.join('') + '<span style="opacity:.8;font-weight:400">원/kg</span>'; $('top3').classList.remove('hide');
   var F = DATA.fuel || {};
   $('fD').textContent = F.diesel == null ? '-' : won(F.diesel); $('fG').textContent = F.gas == null ? '-' : won(F.gas); $('fDt').textContent = F.date || '';
 }
