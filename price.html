@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="app-version" content="1.00">
+<meta name="robots" content="noindex, nofollow">
+<title>GoScrap 시세</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--red:#c62828;--red-d:#9f1f1f;--red-l:#fdecea;--bg:#f5f6f8;--card:#fff;--line:#e3e6ea;--text:#1d2329;--muted:#6b7480;--up:#c62828;--down:#1565c0;--ok:#2e7d32}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-text-size-adjust:100%}
+.hide{display:none!important}
+header{position:sticky;top:0;z-index:5;background:var(--red);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
+header .brand{font-weight:800;font-size:17px;letter-spacing:-.2px}
+header .who{margin-left:auto;font-size:13px;opacity:.95}
+header button{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:5px 10px;font-size:13px}
+main{max-width:980px;margin:0 auto;padding:14px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+h2{font-size:16px;margin:0 0 10px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;font-size:16px;padding:11px 12px;border:1px solid #c9cfd6;border-radius:8px;background:#fff;color:var(--text)}
+input:focus,select:focus{outline:2px solid var(--red);outline-offset:0;border-color:var(--red)}
+.btn{display:inline-block;border:0;border-radius:8px;padding:11px 16px;font-size:15px;font-weight:700;background:var(--red);color:#fff;cursor:pointer}
+.btn:disabled{opacity:.5}
+.btn.sub{background:#fff;color:var(--red);border:1px solid var(--red)}
+.btn.sm{padding:6px 10px;font-size:13px;font-weight:600}
+.btn.gray{background:#eef0f3;color:var(--text);border:1px solid var(--line)}
+.msg{margin-top:10px;font-size:14px;min-height:20px}
+.msg.err{color:var(--red)}
+#login{max-width:420px;margin:40px auto 0}
+#login .btn{width:100%;margin-top:16px}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tabs button{flex:1;min-width:120px;padding:11px 8px;font-size:15px;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--muted)}
+.tabs button.on{background:var(--red);border-color:var(--red);color:#fff}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.bar .sp{flex:1}
+.lme{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.lme div.c{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
+.lme .n{font-weight:700}.lme .k{font-size:12px;color:var(--muted)}
+.lme .v{font-size:18px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+.lme .w{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:#fafbfc;font-size:12px;color:var(--muted);font-weight:700;position:sticky;top:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td.b{font-weight:800}
+td.wrap{white-space:normal}
+.calc{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.res div{background:var(--red-l);border-radius:8px;padding:12px}
+.res .t{font-size:12px;color:var(--muted)}
+.res .v{font-size:22px;font-weight:800;color:var(--red-d);font-variant-numeric:tabular-nums}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700}
+.pill.on{background:#e8f5e9;color:var(--ok)}.pill.off{background:#eceff1;color:#607d8b}.pill.lock{background:var(--red-l);color:var(--red)}
+.mgr-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
+.mgr-form label{margin-top:0}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal .card{max-width:420px;width:100%;margin:0}
+.pin{font-size:34px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--red-d);margin:8px 0;font-variant-numeric:tabular-nums}
+textarea{width:100%;font-size:14px;padding:10px;border:1px solid #c9cfd6;border-radius:8px;min-height:90px;resize:vertical}
+@media (max-width:640px){
+  .calc{grid-template-columns:1fr}
+  .mgr-form{grid-template-columns:1fr 1fr}
+  .mgr-form .btn{grid-column:1/-1}
+  th,td{padding:8px 6px}
+  .hide-m{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">GoScrap 시세</span>
+  <span class="who" id="who"></span>
+  <button id="outBtn" class="hide" onclick="logout()">로그아웃</button>
+</header>
+<main>
+  <!-- 로그인 -->
+  <section id="login" class="card hide">
+    <h2>로그인</h2>
+    <label for="lid">아이디 (상호 또는 전화번호)</label>
+    <input id="lid" autocomplete="username" placeholder="예: 창대자원 또는 010-0000-0000">
+    <label for="lpin">PIN 6자리</label>
+    <input id="lpin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="숫자 6자리">
+    <button class="btn" id="lbtn" onclick="login()">로그인</button>
+    <div class="msg" id="lmsg"></div>
+    <div class="note">PIN을 모르시면 파이로에 전화해 주십시오. 5번 틀리면 10분 동안 잠깁니다.</div>
+  </section>
+
+  <!-- 시세판 -->
+  <section id="board" class="hide">
+    <div class="tabs">
+      <button id="t-metal" class="on" onclick="tab('metal')">비철 시세</button>
+      <button id="t-wire" onclick="tab('wire')">전선 매입 견적</button>
+      <button id="t-mgr" class="hide" onclick="tab('mgr')">열람 계정 관리</button>
+    </div>
+    <div class="bar"><span id="asof"></span><span class="sp"></span><button class="btn gray sm" onclick="load()">새로고침</button></div>
+
+    <div id="p-metal">
+      <div class="card">
+        <h2>LME 비철 (런던금속거래소)</h2>
+        <div class="lme" id="lmeBox"></div>
+        <div class="note">USD/톤 · 원/kg은 그 시점 환율로 바꾼 값입니다. 전일 대비는 전일 정산가 기준.</div>
+      </div>
+      <div class="card">
+        <h2>국내 스크랩 시세</h2>
+        <input id="mq" placeholder="품목·규격 검색" oninput="drawMetals()" style="margin-bottom:10px">
+        <div class="tw"><table><thead><tr><th>품목</th><th>규격</th><th class="r">시세 (원/kg)</th><th class="hide-m">기준일</th></tr></thead><tbody id="metalBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="p-wire" class="hide">
+      <div class="card">
+        <h2>매입 견적 계산</h2>
+        <div class="calc">
+          <div><label for="wSel">전선 규격</label><select id="wSel" onchange="calc()"></select></div>
+          <div><label for="wKg">무게 (kg)</label><input id="wKg" type="number" inputmode="decimal" value="100" oninput="calc()"></div>
+        </div>
+        <div class="res">
+          <div><div class="t">매입 단가</div><div class="v" id="wUnit">-</div></div>
+          <div><div class="t">예상 매입 금액</div><div class="v" id="wTot">-</div></div>
+        </div>
+        <div class="note">오늘 시세를 반영한 참고 금액입니다. 실제 매입가는 현장에서 상태·무게를 확인한 뒤 확정합니다.</div>
+      </div>
+      <div class="card">
+        <h2>규격별 매입 단가 (<span id="wCnt">0</span>종)</h2>
+        <input id="wq" placeholder="분류·규격·도체 검색" oninput="drawWire()" style="margin-bottom:10px">
+        <div class="tw"><table><thead><tr><th>분류</th><th>규격</th><th class="hide-m">도체</th><th class="r">매입 단가 (원/kg)</th></tr></thead><tbody id="wireBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="p-mgr" class="hide">
+      <div class="card">
+        <h2>열람 계정 추가</h2>
+        <div class="mgr-form">
+          <div><label for="nId">아이디 (상호)</label><input id="nId" placeholder="창대자원"></div>
+          <div><label for="nPh">전화번호</label><input id="nPh" inputmode="tel" placeholder="010-0000-0000"></div>
+          <div><label for="nMemo">메모</label><input id="nMemo" placeholder="선택"></div>
+          <button class="btn" onclick="mgrAdd()">추가</button>
+        </div>
+        <div class="msg" id="mMsg"></div>
+        <div class="note">추가한 뒤 「PIN 발급」을 눌러야 로그인할 수 있습니다. 이 계정은 이 화면(시세·전선 매입 단가)만 볼 수 있고 ERP에는 들어갈 수 없습니다.</div>
+      </div>
+      <div class="card">
+        <h2>열람 계정</h2>
+        <div class="tw"><table><thead><tr><th>아이디</th><th>전화번호</th><th>상태</th><th>PIN 발급</th><th>최근 조회</th><th class="r">7일 조회</th><th>처리</th></tr></thead><tbody id="mgrBody"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="pinModal" class="modal hide" onclick="if(event.target===this)pinClose()">
+  <div class="card">
+    <h2 id="pinTitle">PIN 발급</h2>
+    <div class="pin" id="pinVal"></div>
+    <div class="note" style="margin-bottom:8px">이 PIN은 지금 한 번만 보입니다. 아래 문구를 복사해 문자로 보내십시오. 다시 보려면 재발급해야 하며, 재발급하면 이전 PIN과 접속은 모두 끊깁니다.</div>
+    <textarea id="pinText" readonly></textarea>
+    <div class="acts" style="margin-top:10px"><button class="btn" onclick="pinCopy()">문구 복사</button><button class="btn gray" onclick="pinClose()">닫기</button></div>
+    <div class="msg" id="pinMsg"></div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = 'https://buchnmdsdjlcvqnjaaxe.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_8IbvXKSyMvhVurvs-2ssLQ_Gj9Svfez';
+var TK = 'gs_price_token';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+var OWNER = false, TOKEN = null, DATA = null, CUR = 'metal', timer = null;
+
+function $(i){ return document.getElementById(i); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"'`]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;', '`':'&#96;' }[c]; }); }
+function won(n){ return n == null || isNaN(n) ? '-' : Math.round(Number(n)).toLocaleString('ko-KR'); }
+function num2(n){ return n == null || isNaN(n) ? '-' : Number(n).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function lsGet(){ try { return localStorage.getItem(TK); } catch(e){ return null; } }
+function lsSet(v){ try { if(v) localStorage.setItem(TK, v); else localStorage.removeItem(TK); } catch(e){} }
+function kst(ts){ if(!ts) return '-'; var d = new Date(ts); if(isNaN(d)) return String(ts); return d.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+function md(s){ if(!s) return '-'; var m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (+m[2]) + '/' + (+m[3]) : String(s); }
+function phoneFmt(p){ p = String(p || ''); return p.length === 11 ? p.slice(0,3)+'-'+p.slice(3,7)+'-'+p.slice(7) : p.length === 10 ? p.slice(0,3)+'-'+p.slice(3,6)+'-'+p.slice(6) : p; }
+
+async function boot(){
+  try {
+    var s = await sb.auth.getSession();
+    if(s.data && s.data.session){
+      var r = await sb.rpc('price_viewer_list');
+      if(r.data && r.data.ok){ OWNER = true; }
+    }
+  } catch(e){}
+  TOKEN = lsGet();
+  if(OWNER || TOKEN){ await load(); } else { showLogin(); }
+}
+
+function showLogin(msg){
+  $('board').classList.add('hide'); $('login').classList.remove('hide'); $('outBtn').classList.add('hide'); $('who').textContent = '';
+  if(msg){ $('lmsg').textContent = msg; $('lmsg').className = 'msg err'; }
+  setTimeout(function(){ $('lid').focus(); }, 50);
+}
+
+async function login(){
+  var id = $('lid').value.trim(), pin = $('lpin').value.trim();
+  if(!id){ $('lmsg').textContent = '아이디를 넣으십시오'; $('lmsg').className = 'msg err'; return; }
+  if(!/^\d{6}$/.test(pin)){ $('lmsg').textContent = 'PIN은 숫자 6자리입니다'; $('lmsg').className = 'msg err'; return; }
+  $('lbtn').disabled = true; $('lmsg').textContent = '확인 중…'; $('lmsg').className = 'msg';
+  try {
+    var r = await sb.rpc('price_login', { p_id: id, p_pin: pin });
+    if(r.error) throw r.error;
+    if(!r.data || !r.data.ok){ $('lmsg').textContent = (r.data && r.data.error) || '로그인 실패'; $('lmsg').className = 'msg err'; return; }
+    TOKEN = r.data.token; lsSet(TOKEN); $('lpin').value = ''; $('lmsg').textContent = '';
+    await load();
+  } catch(e){ $('lmsg').textContent = '연결 오류: ' + (e.message || e); $('lmsg').className = 'msg err'; }
+  finally { $('lbtn').disabled = false; }
+}
+
+async function logout(){
+  if(TOKEN){ try { await sb.rpc('price_logout', { p_token: TOKEN }); } catch(e){} }
+  TOKEN = null; lsSet(null); DATA = null;
+  if(OWNER){ location.href = 'pyro.html'; return; }
+  showLogin();
+}
+
+async function load(){
+  $('asof').textContent = '불러오는 중…';
+  try {
+    var r = await sb.rpc('price_board', { p_token: TOKEN });
+    if(r.error) throw r.error;
+    if(!r.data || !r.data.ok){ TOKEN = null; lsSet(null); showLogin('다시 로그인해 주십시오'); return; }
+    DATA = r.data;
+  } catch(e){ $('asof').textContent = '연결 오류: ' + (e.message || e); return; }
+  $('login').classList.add('hide'); $('board').classList.remove('hide');
+  $('who').textContent = DATA.name + (OWNER ? ' (관리)' : '') + ' 님';
+  $('outBtn').classList.toggle('hide', OWNER && !TOKEN);
+  $('t-mgr').classList.toggle('hide', !OWNER);
+  $('asof').textContent = '조회 ' + kst(DATA.at);
+  drawLme(); drawMetals(); fillWireSel(); drawWire(); calc();
+  if(OWNER && CUR === 'mgr') mgrLoad();
+  clearTimeout(timer); timer = setTimeout(function(){ if(document.visibilityState === 'visible') load(); }, 5 * 60 * 1000);
+}
+
+function tab(t){
+  CUR = t;
+  ['metal','wire','mgr'].forEach(function(k){ $('p-' + k).classList.toggle('hide', k !== t); $('t-' + k).classList.toggle('on', k === t); });
+  if(t === 'mgr') mgrLoad();
+}
+
+function drawLme(){
+  var L = DATA.lme || [];
+  $('lmeBox').innerHTML = L.length ? L.map(function(q){
+    var ch = (q.usd != null && q.prev != null) ? q.usd - q.prev : null;
+    var cls = ch > 0 ? 'up' : ch < 0 ? 'down' : '';
+    var pct = (ch != null && q.prev) ? (ch / q.prev * 100) : null;
+    return '<div class="c"><div class="n">' + esc(q.name) + ' <span class="k">' + esc(q.code) + '</span></div>'
+      + '<div class="v">$' + num2(q.usd) + '</div>'
+      + '<div class="w ' + cls + '">' + (ch == null ? '-' : (ch > 0 ? '▲ ' : ch < 0 ? '▼ ' : '') + num2(Math.abs(ch)) + (pct == null ? '' : ' (' + (pct > 0 ? '+' : '') + pct.toFixed(2) + '%)')) + '</div>'
+      + '<div class="w">' + won(q.krw_kg) + ' 원/kg · ' + md(q.date) + '</div></div>';
+  }).join('') : '<div class="note">LME 시세가 아직 없습니다.</div>';
+}
+
+function drawMetals(){
+  var q = ($('mq').value || '').replace(/\s/g, '').toLowerCase();
+  var rows = (DATA.metals || []).filter(function(m){ return !q || ((m.metal || '') + (m.grade || '')).replace(/\s/g, '').toLowerCase().indexOf(q) >= 0; });
+  $('metalBody').innerHTML = rows.length ? rows.map(function(m){
+    return '<tr><td class="b">' + esc(m.metal) + '</td><td class="wrap">' + esc(m.grade || '-') + '</td><td class="r b">' + won(m.price) + '</td><td class="hide-m">' + md(m.date) + '</td></tr>';
+  }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">해당 품목이 없습니다</td></tr>';
+}
+
+function fillWireSel(){
+  var sel = $('wSel'), keep = sel.value;
+  sel.innerHTML = '<option value="">규격을 고르십시오</option>' + (DATA.wire || []).map(function(w, i){
+    return '<option value="' + i + '">' + esc(w.spec) + ' · ' + esc(w.cat) + '</option>';
+  }).join('');
+  if(keep !== '' && DATA.wire[keep]) sel.value = keep;
+}
+
+function drawWire(){
+  var q = ($('wq').value || '').replace(/\s/g, '').toLowerCase();
+  var W = DATA.wire || [];
+  $('wCnt').textContent = W.length;
+  var html = [];
+  W.forEach(function(w, i){
+    if(q && ((w.cat || '') + (w.spec || '') + (w.conductor || '')).replace(/\s/g, '').toLowerCase().indexOf(q) < 0) return;
+    html.push('<tr style="cursor:pointer" onclick="pickWire(' + i + ')"><td class="wrap">' + esc(w.cat) + '</td><td class="b">' + esc(w.spec) + '</td><td class="hide-m">' + esc(w.conductor || '-') + '</td><td class="r b">' + won(w.buy) + '</td></tr>');
+  });
+  $('wireBody').innerHTML = html.length ? html.join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">해당 규격이 없습니다</td></tr>';
+}
+
+function pickWire(i){ $('wSel').value = String(i); calc(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+function calc(){
+  var i = $('wSel').value, kg = parseFloat($('wKg').value);
+  var w = (i !== '' && DATA && DATA.wire) ? DATA.wire[i] : null;
+  if(!w){ $('wUnit').textContent = '-'; $('wTot').textContent = '-'; return; }
+  var unit = Number(w.buy) > 0 ? Number(w.buy) : 0;
+  $('wUnit').textContent = won(unit) + ' 원/kg';
+  $('wTot').textContent = (isNaN(kg) || kg <= 0) ? '-' : won(unit * kg) + ' 원';
+}
+
+/* ── 대표 전용: 열람 계정 관리 ── */
+var MGR = [];
+async function mgrLoad(){
+  var r = await sb.rpc('price_viewer_list');
+  if(r.error || !r.data || !r.data.ok){ $('mgrBody').innerHTML = '<tr><td colspan="7">' + esc((r.data && r.data.error) || (r.error && r.error.message) || '불러오기 실패') + '</td></tr>'; return; }
+  MGR = r.data.rows || [];
+  $('mgrBody').innerHTML = MGR.length ? MGR.map(function(v, i){
+    var locked = v.locked_until && new Date(v.locked_until) > new Date();
+    var st = !v.active ? '<span class="pill off">중지</span>' : locked ? '<span class="pill lock">잠김</span>' : !v.has_pin ? '<span class="pill off">PIN 없음</span>' : '<span class="pill on">사용</span>';
+    return '<tr><td class="b">' + esc(v.login_id) + (v.memo ? '<div class="note" style="margin:0">' + esc(v.memo) + '</div>' : '') + '</td><td>' + esc(phoneFmt(v.phone)) + '</td><td>' + st + '</td>'
+      + '<td>' + (v.pin_issued_at ? kst(v.pin_issued_at) : '-') + '</td><td>' + (v.last_seen_at ? kst(v.last_seen_at) : '-') + '</td><td class="r">' + (v.views_7d || 0) + '</td>'
+      + '<td><div class="acts"><button class="btn sm" onclick="mgrPin(' + i + ')">' + (v.has_pin ? 'PIN 재발급' : 'PIN 발급') + '</button>'
+      + '<button class="btn gray sm" onclick="mgrActive(' + i + ')">' + (v.active ? '사용 중지' : '다시 사용') + '</button>'
+      + '<button class="btn gray sm" onclick="mgrDel(' + i + ')">삭제</button></div></td></tr>';
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">열람 계정이 없습니다</td></tr>';
+}
+
+async function mgrAdd(){
+  var r = await sb.rpc('price_viewer_save', { p_id: null, p_login_id: $('nId').value, p_phone: $('nPh').value, p_memo: $('nMemo').value });
+  var ok = r.data && r.data.ok;
+  $('mMsg').textContent = ok ? '추가했습니다. 「PIN 발급」을 누르십시오.' : ((r.data && r.data.error) || (r.error && r.error.message) || '실패');
+  $('mMsg').className = 'msg' + (ok ? '' : ' err');
+  if(ok){ $('nId').value = ''; $('nPh').value = ''; $('nMemo').value = ''; mgrLoad(); }
+}
+
+async function mgrPin(i){
+  var v = MGR[i]; if(!v) return;
+  if(v.has_pin && !confirm(v.login_id + ' PIN을 새로 발급합니다. 이전 PIN과 지금 열려 있는 접속은 끊깁니다. 진행할까요?')) return;
+  var r = await sb.rpc('price_viewer_issue_pin', { p_id: v.id });
+  if(r.error || !r.data || !r.data.ok){ alert((r.data && r.data.error) || (r.error && r.error.message) || '발급 실패'); return; }
+  var url = location.origin + location.pathname;
+  $('pinTitle').textContent = v.login_id + ' PIN';
+  $('pinVal').textContent = r.data.pin;
+  $('pinText').value = '[파이로 GoScrap 시세]\n주소: ' + url + '\n아이디: ' + v.login_id + ' (또는 전화번호 ' + phoneFmt(v.phone) + ')\nPIN: ' + r.data.pin + '\n비철 시세와 전선 매입 단가를 보실 수 있습니다.';
+  $('pinMsg').textContent = '';
+  $('pinModal').classList.remove('hide');
+  mgrLoad();
+}
+function pinCopy(){
+  var t = $('pinText');
+  try { navigator.clipboard.writeText(t.value).then(function(){ $('pinMsg').textContent = '복사했습니다'; }, function(){ t.select(); document.execCommand('copy'); $('pinMsg').textContent = '복사했습니다'; }); }
+  catch(e){ t.select(); document.execCommand('copy'); $('pinMsg').textContent = '복사했습니다'; }
+}
+function pinClose(){ $('pinModal').classList.add('hide'); $('pinVal').textContent = ''; $('pinText').value = ''; }
+
+async function mgrActive(i){
+  var v = MGR[i]; if(!v) return;
+  if(v.active && !confirm(v.login_id + ' 계정을 사용 중지합니다. 지금 열려 있는 접속도 끊깁니다.')) return;
+  var r = await sb.rpc('price_viewer_set_active', { p_id: v.id, p_active: !v.active });
+  if(r.error || !r.data || !r.data.ok){ alert((r.data && r.data.error) || (r.error && r.error.message) || '실패'); return; }
+  mgrLoad();
+}
+async function mgrDel(i){
+  var v = MGR[i]; if(!v) return;
+  if(!confirm(v.login_id + ' 계정을 삭제합니다. 접속 기록·조회 기록도 함께 지워집니다. 되돌릴 수 없습니다.')) return;
+  var r = await sb.rpc('price_viewer_remove', { p_id: v.id });
+  if(r.error || !r.data || !r.data.ok){ alert((r.data && r.data.error) || (r.error && r.error.message) || '실패'); return; }
+  mgrLoad();
+}
+
+$('lpin').addEventListener('keydown', function(e){ if(e.key === 'Enter') login(); });
+$('lid').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('lpin').focus(); });
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && DATA && Date.now() - new Date(DATA.at).getTime() > 5 * 60 * 1000) load(); });
+boot();
+</script>
+</body>
+</html>
