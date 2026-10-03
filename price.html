@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="1.01">
+<meta name="app-version" content="1.02">
 <meta name="robots" content="noindex, nofollow">
 <title>GoScrap 시세</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -109,7 +109,7 @@ textarea{width:100%;font-size:14px;padding:10px;border:1px solid #c9cfd6;border-
       <button id="t-wire" onclick="tab('wire')">전선 매입 견적</button>
       <button id="t-mgr" class="hide" onclick="tab('mgr')">열람 계정 관리</button>
     </div>
-    <div class="bar"><span id="asof"></span><span class="sp"></span><button class="btn gray sm" onclick="load()">새로고침</button></div>
+    <div class="bar"><span id="asof" class="pill on" style="font-size:13px"></span><span class="sp"></span><button class="btn gray sm" onclick="copyLink()">시세 링크 복사</button><button class="btn gray sm" onclick="load()">새로고침</button></div>
 
     <div id="p-metal">
       <div class="card">
@@ -253,12 +253,16 @@ async function load(){
   $('who').textContent = DATA.name + (OWNER ? ' (관리)' : '') + ' 님';
   $('outBtn').classList.toggle('hide', OWNER && !TOKEN);
   $('t-mgr').classList.toggle('hide', !OWNER);
-  $('asof').textContent = '조회 ' + kst(DATA.at);
+  $('asof').textContent = '기준 ' + kst(DATA.at);
   drawLme(); drawKpi(); drawMetals(); drawGrades(); fillWireSel(); drawWire(); calc();
   if(OWNER && CUR === 'mgr') mgrLoad();
   clearTimeout(timer); timer = setTimeout(function(){ if(document.visibilityState === 'visible') load(); }, 5 * 60 * 1000);
 }
 
+function copyLink(){
+  var u = location.origin + location.pathname, done = function(){ $('asof').textContent = '링크를 복사했습니다'; setTimeout(function(){ if(DATA) $('asof').textContent = '기준 ' + kst(DATA.at); }, 1500); };
+  try { navigator.clipboard.writeText(u).then(done, function(){ prompt('링크', u); }); } catch(e){ prompt('링크', u); }
+}
 function tab(t){
   CUR = t;
   ['metal','wire','mgr'].forEach(function(k){ $('p-' + k).classList.toggle('hide', k !== t); $('t-' + k).classList.toggle('on', k === t); });
