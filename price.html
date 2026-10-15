@@ -3,142 +3,202 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="1.03">
+<meta name="app-version" content="1.05">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#b71c1c">
 <title>GoScrap 시세</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%23b71c1c'/%3E%3Ctext x='96' y='122' font-size='84' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'%3EGS%3C/text%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--red:#c62828;--red-d:#9f1f1f;--red-l:#fdecea;--bg:#f5f6f8;--card:#fff;--line:#e3e6ea;--text:#1d2329;--muted:#6b7480;--up:#c62828;--down:#1565c0;--ok:#2e7d32}
+/* 1.05 (대표 지시 10/15): BVS 데일리와 같은 모바일 앱 구성 — 위 머리글 · 날씨·유가·환율 띠 · 카드 · 아래 탭 · 낮/밤 모드. 브랜드 색은 GoScrap 빨강 */
+:root, html[data-theme="light"]{
+  --font:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+  --bg:#f2f4f7;--sf:#ffffff;--sf2:#f7f8fa;--sf3:#e1e4e9;--ln:#d4d9e0;--ln2:#e1e4e9;
+  --tx:#16181d;--tx2:#4b5563;--tx3:#6b7280;
+  --ac:#c62828;--ac2:#fdecea;--acx:#9f1f1f;
+  --good:#059669;--goodbg:#ecfdf5;--up:#dc2626;--dn:#1d4ed8;--warn:#d97706;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0f1115;--sf:#17181c;--sf2:#1f2126;--sf3:#2b2e35;--ln:#2d3139;--ln2:#383d47;--tx:#f3f4f6;--tx2:#9ca3af;--tx3:#6b7280;--ac:#ef5350;--ac2:#3a1414;--acx:#ff8a80;--good:#10b981;--goodbg:#064e3b;--up:#f87171;--dn:#60a5fa}
+}
+html[data-theme="dark"]{--bg:#0f1115;--sf:#17181c;--sf2:#1f2126;--sf3:#2b2e35;--ln:#2d3139;--ln2:#383d47;--tx:#f3f4f6;--tx2:#9ca3af;--tx3:#6b7280;--ac:#ef5350;--ac2:#3a1414;--acx:#ff8a80;--good:#10b981;--goodbg:#064e3b;--up:#f87171;--dn:#60a5fa}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-text-size-adjust:100%}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font-family:var(--font);color:inherit}
 .hide{display:none!important}
-header{position:sticky;top:0;z-index:5;background:var(--red);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
-header .brand{font-weight:800;font-size:17px;letter-spacing:-.2px}
-header .who{margin-left:auto;font-size:13px;opacity:.95}
-header .top3{flex-basis:100%;font-size:13px;font-weight:700;display:flex;gap:12px;flex-wrap:wrap;padding-top:6px;border-top:1px solid rgba(255,255,255,.25)}
-header .top3 b{font-variant-numeric:tabular-nums}
-header{flex-wrap:wrap}
-header button{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:5px 10px;font-size:13px}
-main{max-width:980px;margin:0 auto;padding:14px 16px 40px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.wrap{max-width:580px;margin:0 auto;padding:0 12px calc(78px + env(safe-area-inset-bottom))}
+/* 머리글 */
+#top{position:sticky;top:0;z-index:35;margin:0 -12px;padding:6px 12px;min-height:50px;background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:8px}
+#top .brand{display:flex;align-items:center;gap:8px;min-width:0}
+#top .lg{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#c62828,#ef6c00);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+#top .nm{font-size:15px;font-weight:700;line-height:1.15;white-space:nowrap}
+#top .nm small{display:block;font-size:11px;color:var(--tx3);font-weight:500}
+#top .sp{flex:1}
+#top .who{font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.ib{width:34px;height:34px;border:1px solid var(--ln);border-radius:8px;background:var(--sf);display:inline-grid;place-items:center;cursor:pointer;padding:0;color:var(--tx);flex:none}
+.ib svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+/* 날씨·유가·환율 띠 */
+#mk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0;font-size:12px;line-height:1.3;cursor:pointer}
+#mk>div{min-width:0;border:1px solid var(--ln2);border-radius:8px;padding:6px 8px;background:var(--sf)}
+#mk i{display:block;font-style:normal;font-size:10.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mk b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+#mk small{display:block;font-size:10.5px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:420px){#mk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* 카드 */
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.sec-h{font-size:14px;font-weight:700;margin:0 0 10px;padding-left:8px;border-left:3px solid var(--ac);line-height:1.3;display:flex;align-items:center;gap:8px}
+.sec-h .sp{flex:1}.sec-h .m{font-size:11.5px;color:var(--tx3);font-weight:400;font-variant-numeric:tabular-nums}
 h2{font-size:16px;margin:0 0 10px}
-label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
-input,select{width:100%;font-size:16px;padding:11px 12px;border:1px solid #c9cfd6;border-radius:8px;background:#fff;color:var(--text)}
-input:focus,select:focus{outline:2px solid var(--red);outline-offset:0;border-color:var(--red)}
-.btn{display:inline-block;border:0;border-radius:8px;padding:11px 16px;font-size:15px;font-weight:700;background:var(--red);color:#fff;cursor:pointer}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--tx2);margin:8px 0 4px}
+input,select{width:100%;font-size:16px;padding:10px 11px;border:1px solid var(--ln);border-radius:8px;background:var(--sf);color:var(--tx)}
+input:focus,select:focus{outline:2px solid var(--ac);outline-offset:0;border-color:var(--ac)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid var(--ac);border-radius:8px;padding:10px 14px;font-size:15px;font-weight:700;background:var(--ac);color:#fff;cursor:pointer;min-height:40px}
 .btn:disabled{opacity:.5}
-.btn.sub{background:#fff;color:var(--red);border:1px solid var(--red)}
-.btn.sm{padding:6px 10px;font-size:13px;font-weight:600}
-.btn.gray{background:#eef0f3;color:var(--text);border:1px solid var(--line)}
-.msg{margin-top:10px;font-size:14px;min-height:20px}
-.msg.err{color:var(--red)}
-#login{max-width:420px;margin:40px auto 0}
-#login .btn{width:100%;margin-top:16px}
-.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.tabs button{flex:1;min-width:120px;padding:11px 8px;font-size:15px;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--muted)}
-.tabs button.on{background:var(--red);border-color:var(--red);color:#fff}
-.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.btn.sub{background:var(--sf);color:var(--ac)}
+.btn.sm{padding:5px 10px;font-size:12.5px;font-weight:600;min-height:30px}
+.btn.gray{background:var(--sf);color:var(--tx2);border-color:var(--ln)}
+.msg{margin-top:10px;font-size:13.5px;min-height:20px}.msg.err{color:var(--up)}
+.note{font-size:12px;color:var(--tx3);margin-top:8px}
+.k{font-size:11px;color:var(--tx3);font-weight:400}
+.bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px;font-size:12.5px;color:var(--tx3)}
 .bar .sp{flex:1}
-.k{font-size:11px;color:var(--muted);font-weight:400}
-.hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.hd h2{margin:0}.hd .sp{flex:1}.hd .m{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.kpi .c{background:#fff;border:1px solid var(--line);border-left:4px solid var(--red);border-radius:10px;padding:12px 14px}
-.kpi .c.g{border-left-color:#2e7d32}.kpi .c.b{border-left-color:#1565c0}.kpi .c.a{border-left-color:#ef6c00}.kpi .c.f{grid-column:1/-1;border-left-color:#6a1b9a}
-.kpi .l{font-size:12px;color:var(--muted)}.kpi .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px}.kpi .s{font-size:12px;color:var(--muted)}
-.kpi .fr{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;margin-top:4px;font-size:15px}.kpi .fr b{font-size:19px;font-variant-numeric:tabular-nums}
+/* 오늘 시세 3칸 */
+.kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.kpi .c{background:var(--sf);border:1px solid var(--ln);border-top:3px solid var(--ac);border-radius:10px;padding:9px 10px;min-width:0}
+.kpi .c.g{border-top-color:#2e7d32}.kpi .c.b{border-top-color:#1565c0}.kpi .c.a{border-top-color:#ef6c00}
+.kpi .l{font-size:11.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap}
+.kpi .s{font-size:11px;color:var(--tx3)}
+/* 표 */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
 .tw.sc{max-height:440px;overflow-y:auto}
-.tw table th:first-child,.tw table td:first-child{position:sticky;left:0;background:#fff;z-index:1}
-.tw table th:first-child{z-index:2;background:#fafbfc}
-.badge{display:inline-block;padding:1px 7px;border-radius:99px;background:#eef0f3;font-size:12px;color:#455a64}
-tr.st td{opacity:.6}
-.up{color:var(--up)}.down{color:var(--down)}
-.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-th{background:#fafbfc;font-size:12px;color:var(--muted);font-weight:700;position:sticky;top:0}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--ln2);text-align:left;white-space:nowrap}
+th{background:var(--sf2);font-size:11.5px;color:var(--tx3);font-weight:700;position:sticky;top:0;z-index:1}
 td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
-td.b{font-weight:800}
+td.b{font-weight:700}
 td.wrap{white-space:normal}
-.calc{display:grid;grid-template-columns:2fr 1fr;gap:10px}
-.res{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.res div{background:var(--red-l);border-radius:8px;padding:12px}
-.res .t{font-size:12px;color:var(--muted)}
-.res .v{font-size:22px;font-weight:800;color:var(--red-d);font-variant-numeric:tabular-nums}
-.note{font-size:12px;color:var(--muted);margin-top:10px}
+tr.st td{opacity:.6}
+.up{color:var(--up)}.down{color:var(--dn)}
+.badge{display:inline-block;padding:1px 7px;border-radius:99px;background:var(--sf2);border:1px solid var(--ln2);font-size:11.5px;color:var(--tx2)}
+tr.grp td{background:var(--sf2);font-weight:700;font-size:12.5px;color:var(--tx);white-space:normal}
+tr.grp td .k{font-weight:400}
+/* 계산 */
+.calc{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.res>div{background:var(--ac2);border-radius:10px;padding:10px 12px}
+.res .t{font-size:12px;color:var(--tx2)}
+.res .v{font-size:21px;font-weight:700;color:var(--ac);font-variant-numeric:tabular-nums}
+.res3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.res3>div{background:var(--sf2);border:1px solid var(--ln2);border-radius:10px;padding:8px 10px;min-width:0}
+.res3 .t{font-size:11.5px;color:var(--tx3)}.res3 .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.basis{background:var(--ac2);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px;line-height:1.6}
+.basis b{font-variant-numeric:tabular-nums}
 .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700}
-.pill.on{background:#e8f5e9;color:var(--ok)}.pill.off{background:#eceff1;color:#607d8b}.pill.lock{background:var(--red-l);color:var(--red)}
+.pill.on{background:var(--goodbg);color:var(--good)}.pill.off{background:var(--sf2);color:var(--tx3)}.pill.lock{background:var(--ac2);color:var(--ac)}
 .mgr-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
 .mgr-form label{margin-top:0}
 .acts{display:flex;gap:6px;flex-wrap:wrap}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
 .modal .card{max-width:420px;width:100%;margin:0}
-.pin{font-size:34px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--red-d);margin:8px 0;font-variant-numeric:tabular-nums}
-textarea{width:100%;font-size:14px;padding:10px;border:1px solid #c9cfd6;border-radius:8px;min-height:90px;resize:vertical}
-@media (max-width:640px){
-  .calc{grid-template-columns:1fr}
-  .kpi{grid-template-columns:1fr 1fr}
-  .kpi .v{font-size:17px}
-  .hd input{max-width:none!important}
-  .mgr-form{grid-template-columns:1fr 1fr}
-  .mgr-form .btn{grid-column:1/-1}
-  th,td{padding:8px 6px}
+.pin{font-size:34px;font-weight:700;letter-spacing:6px;text-align:center;color:var(--ac);margin:8px 0;font-variant-numeric:tabular-nums}
+textarea{width:100%;font-size:14px;padding:10px;border:1px solid var(--ln);border-radius:8px;min-height:90px;resize:vertical;background:var(--sf)}
+/* 로그인 */
+#login{max-width:420px;margin:0 auto}
+#login .hero{text-align:center;margin:28px 0 18px}
+#login .hero .lg{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#c62828,#ef6c00);color:#fff;display:grid;place-items:center;font-weight:700;font-size:21px;margin:0 auto 10px;box-shadow:0 4px 16px rgba(198,40,40,.3)}
+#login .hero h1{font-size:20px;margin:0 0 4px}
+#login .btn{width:100%;margin-top:14px}
+/* 아래 탭 */
+.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:580px;background:var(--sf);border-top:1px solid var(--ln);display:flex;padding:0 0 env(safe-area-inset-bottom);z-index:30}
+.tabs button{flex:1 1 0;min-width:0;border:0;background:none;padding:7px 2px 6px;font-size:11.5px;color:var(--tx3);cursor:pointer;border-top:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tabs button.on{color:var(--ac);border-top-color:var(--ac);font-weight:700}
+#top3{display:none!important}
+body.nologin #mk>div:nth-child(n+3){display:none}
+body.nologin #mk{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:480px){
+  .calc{grid-template-columns:1fr 1fr}
+  .mgr-form{grid-template-columns:1fr 1fr}.mgr-form .btn{grid-column:1/-1}
+  th,td{padding:8px 5px}
   .hide-m{display:none}
+  .kpi .v{font-size:16px}
 }
 </style>
 </head>
 <body>
-<header>
-  <span class="brand">GoScrap 시세</span>
+<div class="wrap">
+<header id="top">
+  <div class="brand"><div class="lg">GS</div><div class="nm">GoScrap 시세<small>파이로 고물상 시세판</small></div></div>
+  <span class="sp"></span>
   <span class="who" id="who"></span>
-  <button id="outBtn" class="hide" onclick="logout()">로그아웃</button>
-<div class="top3 hide" id="top3"></div></header>
-<main>
+  <button class="ib" id="themeBtn" onclick="toggleTheme()" title="낮/밤 모드"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <button class="ib hide" id="outBtn" onclick="logout()" title="로그아웃"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+  <div id="top3"></div>
+</header>
+<div id="mk" title="날씨·유가·환율 — 누르면 다시 불러옵니다" onclick="mkLoad(true)">
+  <div><i>이천 날씨</i><b id="mkW0">…</b><small id="mkW0s">불러오는 중</small></div>
+  <div><i>청주 날씨</i><b id="mkW1">…</b><small id="mkW1s">불러오는 중</small></div>
+  <div><i>유가 (전국 평균)</i><b>경유 <span id="fD">-</span></b><small>휘발유 <span id="fG">-</span> <span id="fDt"></span></small></div>
+  <div><i>환율 (USD/KRW)</i><b id="mkFx">-</b><small id="mkFxs"></small></div>
+</div>
+
   <!-- 로그인 -->
-  <section id="login" class="card hide">
-    <h2>로그인</h2>
-    <label for="lid">아이디 (상호 또는 전화번호)</label>
-    <input id="lid" autocomplete="username" placeholder="예: 창대자원 또는 010-0000-0000">
-    <label for="lpin">PIN 6자리</label>
-    <input id="lpin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="숫자 6자리">
-    <button class="btn" id="lbtn" onclick="login()">로그인</button>
-    <div class="msg" id="lmsg"></div>
-    <div class="note">PIN을 모르시면 파이로에 전화해 주십시오. 5번 틀리면 10분 동안 잠깁니다.</div>
+  <section id="login" class="hide">
+    <div class="hero"><div class="lg">GS</div><h1>GoScrap 시세</h1><div class="k">파이로가 매일 올리는 비철 시세 · 전선 매입 단가</div></div>
+    <div class="card">
+      <label for="lid">아이디 (상호 또는 전화번호)</label>
+      <input id="lid" autocomplete="username" placeholder="예: 창대자원 또는 010-0000-0000">
+      <label for="lpin">PIN 6자리</label>
+      <input id="lpin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="숫자 6자리">
+      <button class="btn" id="lbtn" onclick="login()">로그인</button>
+      <div class="msg" id="lmsg"></div>
+      <div class="note">PIN을 모르시면 파이로에 전화해 주십시오. 5번 틀리면 10분 동안 잠깁니다.</div>
+    </div>
   </section>
 
   <!-- 시세판 -->
   <section id="board" class="hide">
-    <div class="tabs">
-      <button id="t-metal" class="on" onclick="tab('metal')">비철 시세</button>
-      <button id="t-wire" onclick="tab('wire')">전선 매입 견적</button>
-      <button id="t-mgr" class="hide" onclick="tab('mgr')">열람 계정 관리</button>
-    </div>
-    <div class="bar"><span id="asof" class="pill on" style="font-size:13px"></span><span class="sp"></span><button class="btn gray sm" onclick="copyLink()">시세 링크 복사</button><button class="btn gray sm" onclick="load()">새로고침</button></div>
+    <div class="bar"><span id="asof" class="pill on"></span><span class="sp"></span><button class="btn gray sm" onclick="copyLink()">링크 복사</button><button class="btn gray sm" onclick="load()">새로고침</button></div>
 
     <div id="p-metal">
-      <div class="card">
-        <div class="hd"><h2>LME 비철 시세</h2><span class="sp"></span><span class="m" id="lmeMeta">-</span></div>
-        <div class="tw"><table><thead><tr><th>품목</th><th class="r">원/kg</th><th class="r">전일대비</th><th class="r">등락률</th><th class="r">고가</th><th class="r">저가</th><th class="r">USD/t</th><th>시각</th></tr></thead><tbody id="lmeBody"></tbody></table></div>
-      </div>
       <div class="kpi">
-        <div class="c g"><div class="l">A동 (꽈베기) 최신 시세</div><div class="v" id="kA">-</div><div class="s" id="kAd"></div></div>
-        <div class="c b"><div class="l">상동 최신 시세</div><div class="v" id="kS">-</div><div class="s" id="kSd"></div></div>
-        <div class="c a"><div class="l">AL 샤시 최신 시세</div><div class="v" id="kL">-</div><div class="s" id="kLd"></div></div>
-        <div class="c f"><div class="l">유류비 (전국 평균, 원/L)</div><div class="fr"><span>경유 <b id="fD">-</b></span><span>휘발유 <b id="fG">-</b></span><span class="s" id="fDt"></span></div></div>
+        <div class="c g"><div class="l">A동 (꽈베기)</div><div class="v" id="kA">-</div><div class="s" id="kAd"></div></div>
+        <div class="c b"><div class="l">상동</div><div class="v" id="kS">-</div><div class="s" id="kSd"></div></div>
+        <div class="c a"><div class="l">AL 샤시</div><div class="v" id="kL">-</div><div class="s" id="kLd"></div></div>
       </div>
       <div class="card">
-        <div class="hd"><h2>금속·스크랩 시세 (<span id="mCnt">0</span>종)</h2><span class="sp"></span><input id="mq" placeholder="금속명/규격 검색" oninput="drawMetals()" style="max-width:240px"></div>
-        <div class="tw sc"><table><thead><tr><th>금속/품목</th><th class="r">최신 시세</th><th>단위</th><th>시세 기준일자</th><th>스크랩 등급/출처</th></tr></thead><tbody id="metalBody"></tbody></table></div>
+        <div class="sec-h">LME 비철 시세<span class="sp"></span><span class="m" id="lmeMeta">-</span></div>
+        <div class="tw"><table><thead><tr><th>품목</th><th class="r">원/kg</th><th class="r">전일대비</th><th class="r">등락률</th><th class="r hide-m">고가</th><th class="r hide-m">저가</th><th class="r hide-m">USD/t</th><th class="hide-m">시각</th></tr></thead><tbody id="lmeBody"></tbody></table></div>
       </div>
       <div class="card">
-        <div class="hd"><h2>등급별 가격 판단 (<span id="gCnt">0</span>종)</h2></div>
+        <div class="sec-h">금속·스크랩 시세 (<span id="mCnt">0</span>종)</div>
+        <input id="mq" placeholder="금속명/규격 검색" oninput="drawMetals()" style="margin-bottom:8px">
+        <div class="tw sc"><table><thead><tr><th>금속/품목</th><th class="r">최신 시세</th><th>기준일</th><th class="hide-m">단위</th><th class="hide-m">등급/출처</th></tr></thead><tbody id="metalBody"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="sec-h">등급별 가격 판단 (<span id="gCnt">0</span>종)</div>
         <div class="note" style="margin:0 0 8px">적정가 = 지금 LME × 이 등급의 최근 평균 비율. 차이가 +면 국내 시세가 LME 흐름보다 비싼 편, −면 싼 편.</div>
         <div class="tw"><table><thead><tr><th>품목</th><th class="r">오늘 시세</th><th>시세일</th><th>LME</th><th class="r">LME 원/kg</th><th class="r">지금 비율</th><th class="r">평균 비율</th><th class="r">적정가</th><th class="r">차이</th></tr></thead><tbody id="gradeBody"></tbody></table></div>
       </div>
     </div>
 
     <div id="p-wire" class="hide">
+      <div class="card hide" id="simCard">
+        <div class="sec-h">기준가·마진 환산 (대표만)</div>
+        <div class="mgr-form" style="grid-template-columns:1fr 1fr 1fr auto">
+          <div><label for="sCu">상동 기준가 (원/kg)</label><input id="sCu" type="number" inputmode="numeric" oninput="simSet()"></div>
+          <div><label for="sAl">AL 샤시 기준가 (원/kg)</label><input id="sAl" type="number" inputmode="numeric" oninput="simSet()"></div>
+          <div><label for="sMg">내 마진 (%)</label><input id="sMg" type="number" inputmode="decimal" step="0.5" oninput="simSet()"></div>
+          <button class="btn gray" onclick="simReset()">시세로 되돌리기</button>
+        </div>
+        <div class="note" id="simNote">기준가·마진을 바꾸면 아래 매입 단가와 계산이 바로 다시 계산됩니다. 이 화면에서만 바뀌고 열람 계정이 보는 단가는 그대로입니다.</div>
+      </div>
       <div class="card">
-        <h2>매입 견적 계산</h2>
+        <div class="sec-h">매입 견적 계산</div>
         <div class="calc">
           <div><label for="wSel">전선 규격</label><select id="wSel" onchange="calc()"></select></div>
           <div><label for="wKg">무게 (kg)</label><input id="wKg" type="number" inputmode="decimal" value="100" oninput="calc()"></div>
@@ -147,18 +207,21 @@ textarea{width:100%;font-size:14px;padding:10px;border:1px solid #c9cfd6;border-
           <div><div class="t">매입 단가</div><div class="v" id="wUnit">-</div></div>
           <div><div class="t">예상 매입 금액</div><div class="v" id="wTot">-</div></div>
         </div>
+        <div class="res3"><div><div class="t">수율 (도체 비율)</div><div class="v" id="wYld">-</div></div><div><div class="t">기준 시세</div><div class="v" id="wRef">-</div></div><div><div class="t">기준 시각</div><div class="v" id="wRefT">-</div></div></div>
+        <div class="res3 hide" id="wOwn"><div><div class="t">회수 가치 (대표만)</div><div class="v" id="wRec">-</div></div><div><div class="t">가공·운송비 (대표만)</div><div class="v" id="wCost">-</div></div><div><div class="t">손익분기 (대표만)</div><div class="v" id="wBe">-</div></div></div>
         <div class="note">오늘 시세를 반영한 참고 금액입니다. 실제 매입가는 현장에서 상태·무게를 확인한 뒤 확정합니다.</div>
       </div>
       <div class="card">
-        <h2>규격별 매입 단가 (<span id="wCnt">0</span>종)</h2>
-        <input id="wq" placeholder="분류·규격·도체 검색" oninput="drawWire()" style="margin-bottom:10px">
-        <div class="tw"><table><thead><tr><th>분류</th><th>규격</th><th class="hide-m">도체</th><th class="r">매입 단가 (원/kg)</th></tr></thead><tbody id="wireBody"></tbody></table></div>
+        <div class="sec-h">규격별 매입 단가 (<span id="wCnt">0</span>종)</div>
+        <div class="basis" id="wBasis">-</div>
+        <input id="wq" placeholder="분류·규격·도체 검색" oninput="drawWire()" style="margin-bottom:8px">
+        <div class="tw"><table><thead><tr><th>규격</th><th class="r">수율</th><th class="r">매입 단가 (원/kg)</th></tr></thead><tbody id="wireBody"></tbody></table></div>
       </div>
     </div>
 
     <div id="p-mgr" class="hide">
       <div class="card">
-        <h2>열람 계정 추가</h2>
+        <div class="sec-h">열람 계정 추가</div>
         <div class="mgr-form">
           <div><label for="nId">아이디 (상호)</label><input id="nId" placeholder="창대자원"></div>
           <div><label for="nPh">전화번호</label><input id="nPh" inputmode="tel" placeholder="010-0000-0000"></div>
@@ -169,12 +232,18 @@ textarea{width:100%;font-size:14px;padding:10px;border:1px solid #c9cfd6;border-
         <div class="note">추가한 뒤 「PIN 발급」을 눌러야 로그인할 수 있습니다. 이 계정은 이 화면(시세·전선 매입 단가)만 볼 수 있고 ERP에는 들어갈 수 없습니다.</div>
       </div>
       <div class="card">
-        <h2>열람 계정</h2>
+        <div class="sec-h">열람 계정</div>
         <div class="tw"><table><thead><tr><th>아이디</th><th>전화번호</th><th>상태</th><th>PIN 발급</th><th>최근 조회</th><th class="r">7일 조회</th><th>처리</th></tr></thead><tbody id="mgrBody"></tbody></table></div>
       </div>
     </div>
   </section>
-</main>
+</div>
+
+<nav class="tabs hide" id="tabs">
+  <button id="t-metal" class="on" onclick="tab('metal')"><svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>비철 시세</button>
+  <button id="t-wire" onclick="tab('wire')"><svg viewBox="0 0 24 24"><path d="M4 7c4 0 4 10 8 10s4-10 8-10"/><circle cx="4" cy="7" r="1.5"/><circle cx="20" cy="7" r="1.5"/></svg>전선 매입</button>
+  <button id="t-mgr" class="hide" onclick="tab('mgr')"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M17 11h5M19.5 8.5v5"/></svg>열람 계정</button>
+</nav>
 
 <div id="pinModal" class="modal hide" onclick="if(event.target===this)pinClose()">
   <div class="card">
@@ -217,7 +286,7 @@ async function boot(){
 }
 
 function showLogin(msg){
-  $('board').classList.add('hide'); $('login').classList.remove('hide'); $('top3').classList.add('hide'); $('outBtn').classList.add('hide'); $('who').textContent = '';
+  document.body.classList.add('nologin'); $('board').classList.add('hide'); $('tabs').classList.add('hide'); $('login').classList.remove('hide'); $('top3').classList.add('hide'); $('outBtn').classList.add('hide'); $('who').textContent = '';
   if(msg){ $('lmsg').textContent = msg; $('lmsg').className = 'msg err'; }
   setTimeout(function(){ $('lid').focus(); }, 50);
 }
@@ -252,12 +321,13 @@ async function load(){
     if(!r.data || !r.data.ok){ TOKEN = null; lsSet(null); showLogin('다시 로그인해 주십시오'); return; }
     DATA = r.data;
   } catch(e){ $('asof').textContent = '연결 오류: ' + (e.message || e); return; }
-  $('login').classList.add('hide'); $('board').classList.remove('hide');
-  $('who').textContent = DATA.name + (OWNER ? ' (관리)' : '') + ' 님';
+  document.body.classList.remove('nologin'); $('login').classList.add('hide'); $('board').classList.remove('hide'); $('tabs').classList.remove('hide');
+  $('who').textContent = DATA.name + (OWNER ? ' (관리)' : '') + ' 님'; mkPaint(); mkLoad(false); mkOwn();
   $('outBtn').classList.toggle('hide', OWNER && !TOKEN);
   $('t-mgr').classList.toggle('hide', !OWNER);
   $('asof').textContent = '기준 ' + kst(DATA.at);
-  drawLme(); drawKpi(); drawMetals(); drawGrades(); fillWireSel(); drawWire(); calc();
+  if(OWNER) await wireOwnMerge();
+  drawLme(); drawKpi(); drawMetals(); drawGrades(); fillWireSel(); simInit(); drawWire(); calc();
   if(OWNER && CUR === 'mgr') mgrLoad();
   clearTimeout(timer); timer = setTimeout(function(){ if(document.visibilityState === 'visible') load(); }, 5 * 60 * 1000);
 }
@@ -267,7 +337,7 @@ function copyLink(){
   try { navigator.clipboard.writeText(u).then(done, function(){ prompt('링크', u); }); } catch(e){ prompt('링크', u); }
 }
 function tab(t){
-  CUR = t;
+  CUR = t; window.scrollTo(0, 0);
   ['metal','wire','mgr'].forEach(function(k){ $('p-' + k).classList.toggle('hide', k !== t); $('t-' + k).classList.toggle('on', k === t); });
   if(t === 'mgr') mgrLoad();
 }
@@ -282,18 +352,18 @@ function drawLme(){
       + '<td class="r b">' + (q.krw_kg ? won(q.krw_kg) : '-') + '</td>'
       + '<td class="r ' + cls + '">' + (chW == null ? '-' : sg + won(chW)) + '</td>'
       + '<td class="r ' + cls + '">' + (pct == null ? '-' : sg + pct.toFixed(2) + '%') + '</td>'
-      + '<td class="r">' + (w(q.high) == null ? '-' : won(w(q.high))) + '</td>'
-      + '<td class="r">' + (w(q.low) == null ? '-' : won(w(q.low))) + '</td>'
-      + '<td class="r" style="color:var(--muted)">' + num2(q.usd) + '</td>'
-      + '<td style="color:var(--muted)">' + esc(String(q.time || '').slice(0, 5)) + '</td></tr>';
-  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">-</td></tr>';
+      + '<td class="r hide-m">' + (w(q.high) == null ? '-' : won(w(q.high))) + '</td>'
+      + '<td class="r hide-m">' + (w(q.low) == null ? '-' : won(w(q.low))) + '</td>'
+      + '<td class="r hide-m" style="color:var(--tx3)">' + num2(q.usd) + '</td>'
+      + '<td class="hide-m" style="color:var(--tx3)">' + esc(String(q.time || '').slice(0, 5)) + '</td></tr>';
+  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:20px">-</td></tr>';
   var r0 = L[0];
   $('lmeMeta').textContent = r0 ? '원/kg · 환율 ' + num2(r0.fx) + ' · 갱신 ' + kst(r0.upd) : '-';
 }
 
 function drawKpi(){
   var M = DATA.metals || [];
-  function one(f, v, d){ var m = M.filter(f)[0]; $(v).textContent = m ? won(m.price) + ' 원/kg' : '-'; $(d).textContent = m ? '기준일: ' + m.date : ''; }
+  function one(f, v, d){ var m = M.filter(f)[0]; $(v).textContent = m ? won(m.price) + ' 원/kg' : '-'; $(d).textContent = m ? '기준 ' + md(m.date) : ''; }
   one(function(m){ return m.metal === 'A동(꽈베기)'; }, 'kA', 'kAd');
   if($('kA').textContent === '-') one(function(m){ return String(m.metal).indexOf('A동') >= 0; }, 'kA', 'kAd');
   one(function(m){ return String(m.metal).indexOf('상동') >= 0; }, 'kS', 'kSd');
@@ -301,7 +371,7 @@ function drawKpi(){
   var t3 = [['A동', 'kA'], ['상동', 'kS'], ['샤시', 'kL']].map(function(x){ return '<span>' + x[0] + ' <b>' + esc($(x[1]).textContent.replace(' 원/kg', '')) + '</b></span>'; });
   $('top3').innerHTML = t3.join('') + '<span style="opacity:.8;font-weight:400">원/kg</span>'; $('top3').classList.remove('hide');
   var F = DATA.fuel || {};
-  $('fD').textContent = F.diesel == null ? '-' : won(F.diesel); $('fG').textContent = F.gas == null ? '-' : won(F.gas); $('fDt').textContent = F.date || '';
+  $('fD').textContent = F.diesel == null ? '-' : won(F.diesel); $('fG').textContent = F.gas == null ? '-' : won(F.gas); $('fDt').textContent = F.date ? '· ' + md(F.date) : '';
 }
 
 function drawMetals(){
@@ -309,8 +379,8 @@ function drawMetals(){
   var rows = (DATA.metals || []).filter(function(m){ return !q || ((m.metal || '') + (m.grade || '')).replace(/\s/g, '').toLowerCase().indexOf(q) >= 0; });
   $('mCnt').textContent = rows.length;
   $('metalBody').innerHTML = rows.length ? rows.map(function(m){
-    return '<tr><td class="b">' + esc(m.metal) + '</td><td class="r b up">' + won(m.price) + ' 원</td><td style="color:var(--muted)">' + esc(m.unit || 'KRW/kg') + '</td><td>' + esc(m.date || '-') + '</td><td><span class="badge">' + esc(m.grade || '일반') + '</span></td></tr>';
-  }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">해당 품목이 없습니다</td></tr>';
+    return '<tr><td class="b">' + esc(m.metal) + '</td><td class="r b up">' + won(m.price) + ' 원</td><td>' + esc(md(m.date)) + '</td><td class="hide-m" style="color:var(--tx3)">' + esc(m.unit || 'KRW/kg') + '</td><td class="hide-m"><span class="badge">' + esc(m.grade || '일반') + '</span></td></tr>';
+  }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:20px">해당 품목이 없습니다</td></tr>';
 }
 
 function drawGrades(){
@@ -326,7 +396,7 @@ function drawGrades(){
       + '<td>' + esc(g.lme || '') + '</td><td class="r">' + (g.lme_now == null ? '-' : won(g.lme_now)) + '</td>'
       + '<td class="r">' + pc(g.ratio_now) + '</td><td class="r">' + pc(g.ratio_avg) + (g.avg_days ? ' <span class="k">' + g.avg_days + '일</span>' : '') + '</td>'
       + '<td class="r">' + (g.fair == null ? '-' : won(g.fair)) + '</td><td class="r">' + df + '</td></tr>';
-  }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">-</td></tr>';
+  }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--tx3);padding:20px">-</td></tr>';
 }
 
 function fillWireSel(){
@@ -337,16 +407,75 @@ function fillWireSel(){
   if(keep !== '' && DATA.wire[keep]) sel.value = keep;
 }
 
+/* 1.04 (대표 지시 10/15): 전선 수율·매입 단가 기준 시세 표시
+   기준 시세 = 구리는 상동, 알루미늄은 AL 샤시 (LME 연동이면 LME 원/kg × 평균 비율로 환산한 값)
+   수율은 시세 자료(price_board)에 실려 오면 모두에게, 아직 없으면 대표 로그인 때만 매입 기준표에서 직접 불러와 보임
+   회수 가치·가공운송비·손익분기는 대표만
+   대표는 「기준가·마진 환산」에 상동·AL 샤시 기준가와 내 마진(%)을 넣으면 매입 단가 = (기준가 × 수율 × 0.98 × 0.95 − 가공·운송비) ÷ (1 + 마진)으로 다시 계산 — 화면에서만, DB·열람 계정 단가는 그대로 */
+function wRef(w){ if(w.ref) return w.ref; var c = String(w.conductor || ''); return /Cu|구리/.test(c) ? '상동' : /Al|알루미늄/.test(c) ? 'AL 샤시' : ''; }
+function wSrc(w){ return w.src || ''; }
+function wYield(w){ return w.yield == null || w.yield === '' ? null : Number(w.yield); }
+function wTime(w){ var d = String(w.date || ''); return /^\d{2}:\d{2}/.test(d) ? '오늘 ' + d.slice(0, 5) : md(d); }
+async function wireOwnMerge(){
+  try {
+    var r = await sb.from('gs_pm_buy_guide_price').select('cat,spec,yield_pct,price_ref,live_src,recover_value,unit_cost,breakeven_buy').order('row_no', { ascending: true });
+    if(r.error || !r.data) return; var M = {};
+    r.data.forEach(function(x){ M[x.cat + '|' + x.spec] = x; });
+    (DATA.wire || []).forEach(function(w){ var x = M[w.cat + '|' + w.spec]; if(!x) return;
+      if(w.yield == null) w.yield = x.yield_pct; if(!w.ref) w.ref = x.price_ref; if(!w.src) w.src = x.live_src;
+      w.rec = x.recover_value; w.cost = x.unit_cost; w.be = x.breakeven_buy; });
+  } catch(e){}
+}
+var SIM = { cu: null, al: null, mg: null };
+function simOn(){ return OWNER && (DATA.wire || []).some(function(w){ return w.rec != null; }); }
+function wMargin(w){ return (w.be != null && Number(w.buy) > 0) ? Number(w.be) / Number(w.buy) - 1 : null; }
+function wBase(w){ var r = wRef(w), v = r === '상동' ? SIM.cu : r === 'AL 샤시' ? SIM.al : null; return v != null ? v : (w.price == null ? null : Number(w.price)); }
+function wBuy(w){
+  if(!simOn() || w.rec == null || wYield(w) == null) return Number(w.buy);
+  var b = wBase(w), m = SIM.mg != null ? SIM.mg / 100 : wMargin(w);
+  if(b == null || m == null) return Number(w.buy);
+  return Math.max(0, Math.round((b * wYield(w) / 100 * 0.98 * 0.95 - Number(w.cost || 0)) / (1 + m)));
+}
+function simInit(){
+  $('simCard').classList.toggle('hide', !simOn()); if(!simOn()) return;
+  var W = DATA.wire || [], f = function(r){ return W.filter(function(w){ return wRef(w) === r && w.price != null; })[0]; };
+  var cu = f('상동'), al = f('AL 샤시'), M = {};
+  W.forEach(function(w){ var m = wMargin(w); if(m != null){ var k = Math.round(m * 1000) / 10; M[k] = (M[k] || 0) + 1; } });
+  var mk = Object.keys(M).sort(function(a, b){ return M[b] - M[a]; })[0];
+  if(SIM.cu == null) $('sCu').value = cu ? Math.round(cu.price) : '';
+  if(SIM.al == null) $('sAl').value = al ? Math.round(al.price) : '';
+  if(SIM.mg == null) $('sMg').value = mk != null ? mk : '';
+  $('sCu').placeholder = cu ? '시세 ' + won(cu.price) : ''; $('sAl').placeholder = al ? '시세 ' + won(al.price) : ''; $('sMg').placeholder = mk != null ? '지금 ' + mk + '%' : '';
+}
+function simSet(){
+  var n = function(id){ var v = parseFloat($(id).value); return isNaN(v) ? null : v; };
+  SIM.cu = n('sCu'); SIM.al = n('sAl'); SIM.mg = n('sMg');
+  drawWire(); calc();
+}
+function simReset(){ SIM = { cu: null, al: null, mg: null }; simInit(); drawWire(); calc(); }
+function simChanged(w){ return simOn() && wBuy(w) !== Math.round(Number(w.buy)); }
+function drawBasis(){
+  var W = DATA.wire || [], S = {};
+  W.forEach(function(w){ var k = wRef(w); if(k && !S[k] && w.price != null) S[k] = w; });
+  var ks = Object.keys(S);
+  $('wBasis').innerHTML = ks.length ? '<b>매입 단가 기준 시세</b><br>' + ks.map(function(k){ var w = S[k];
+      return (k === '상동' ? '구리 전선' : k === 'AL 샤시' ? '알루미늄 전선' : '') + ' → ' + esc(k) + ' <b>' + won(w.price) + '</b>원/kg <span class="k">(' + (wSrc(w) === 'LME연동' ? 'LME 시세 환산 · ' : '') + esc(wTime(w)) + ')</span>'; }).join('<br>')
+    + '<div class="k" style="margin-top:4px">매입 단가 = 기준 시세 × 수율(전선 무게 중 구리·알루미늄 비율)에서 회수 손실·가공·운송비를 뺀 참고 금액입니다. 위쪽 빨간 띠의 상동·샤시는 국내 고시 시세라 조금 다를 수 있습니다.</div>'
+    : '기준 시세 자료가 없습니다';
+}
 function drawWire(){
   var q = ($('wq').value || '').replace(/\s/g, '').toLowerCase();
   var W = DATA.wire || [];
   $('wCnt').textContent = W.length;
-  var html = [];
+  drawBasis();
+  var html = [], last = null;
   W.forEach(function(w, i){
     if(q && ((w.cat || '') + (w.spec || '') + (w.conductor || '')).replace(/\s/g, '').toLowerCase().indexOf(q) < 0) return;
-    html.push('<tr style="cursor:pointer" onclick="pickWire(' + i + ')"><td class="wrap">' + esc(w.cat) + '</td><td class="b">' + esc(w.spec) + '</td><td class="hide-m">' + esc(w.conductor || '-') + '</td><td class="r b">' + won(w.buy) + '</td></tr>');
+    if(w.cat !== last){ last = w.cat; html.push('<tr class="grp"><td colspan="3">' + esc(w.cat) + ' <span class="k">· ' + esc(w.conductor || '') + (wRef(w) ? ' · 기준 ' + esc(wRef(w)) + ' ' + won(simOn() ? wBase(w) : w.price) + '원' : '') + '</span></td></tr>'); }
+    var y = wYield(w);
+    html.push('<tr style="cursor:pointer" onclick="pickWire(' + i + ')"><td class="b">' + esc(w.spec) + '</td><td class="r">' + (y == null ? '<span class="k">-</span>' : y.toFixed(1) + '%') + '</td><td class="r b">' + won(wBuy(w)) + (simChanged(w) ? ' <span class="k">(시세 ' + won(w.buy) + ')</span>' : '') + '</td></tr>');
   });
-  $('wireBody').innerHTML = html.length ? html.join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">해당 규격이 없습니다</td></tr>';
+  $('wireBody').innerHTML = html.length ? html.join('') : '<tr><td colspan="3" style="text-align:center;color:var(--tx3);padding:20px">해당 규격이 없습니다</td></tr>';
 }
 
 function pickWire(i){ $('wSel').value = String(i); calc(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -354,10 +483,15 @@ function pickWire(i){ $('wSel').value = String(i); calc(); window.scrollTo({ top
 function calc(){
   var i = $('wSel').value, kg = parseFloat($('wKg').value);
   var w = (i !== '' && DATA && DATA.wire) ? DATA.wire[i] : null;
-  if(!w){ $('wUnit').textContent = '-'; $('wTot').textContent = '-'; return; }
-  var unit = Number(w.buy) > 0 ? Number(w.buy) : 0;
+  $('wOwn').classList.toggle('hide', !(OWNER && w && w.rec != null));
+  if(!w){ ['wUnit','wTot','wYld','wRef','wRefT'].forEach(function(k){ $(k).textContent = '-'; }); return; }
+  var unit = wBuy(w) > 0 ? wBuy(w) : 0, y = wYield(w), bs = simOn() ? wBase(w) : (w.price == null ? null : Number(w.price));
   $('wUnit').textContent = won(unit) + ' 원/kg';
   $('wTot').textContent = (isNaN(kg) || kg <= 0) ? '-' : won(unit * kg) + ' 원';
+  $('wYld').textContent = y == null ? '-' : y.toFixed(1) + '%';
+  $('wRef').textContent = (wRef(w) ? wRef(w) + ' ' : '') + (bs == null ? '-' : won(bs) + '원');
+  $('wRefT').textContent = (wSrc(w) === 'LME연동' ? 'LME 환산 · ' : '') + wTime(w);
+  if(OWNER && w.rec != null){ var rc = bs == null || y == null ? Number(w.rec) : Math.round(bs * y / 100 * 0.98 * 0.95); $('wRec').textContent = won(rc) + '원'; $('wCost').textContent = won(w.cost) + '원'; $('wBe').textContent = won(rc - Number(w.cost || 0)) + '원'; }
 }
 
 /* ── 대표 전용: 열람 계정 관리 ── */
@@ -374,7 +508,7 @@ async function mgrLoad(){
       + '<td><div class="acts"><button class="btn sm" onclick="mgrPin(' + i + ')">' + (v.has_pin ? 'PIN 재발급' : 'PIN 발급') + '</button>'
       + '<button class="btn gray sm" onclick="mgrActive(' + i + ')">' + (v.active ? '사용 중지' : '다시 사용') + '</button>'
       + '<button class="btn gray sm" onclick="mgrDel(' + i + ')">삭제</button></div></td></tr>';
-  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">열람 계정이 없습니다</td></tr>';
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:20px">열람 계정이 없습니다</td></tr>';
 }
 
 async function mgrAdd(){
@@ -423,6 +557,42 @@ async function mgrDel(i){
 $('lpin').addEventListener('keydown', function(e){ if(e.key === 'Enter') login(); });
 $('lid').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('lpin').focus(); });
 document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && DATA && Date.now() - new Date(DATA.at).getTime() > 5 * 60 * 1000) load(); });
+/* ── 1.05 (대표 지시 10/15) BVS 데일리처럼 맨 위 띠: 이천·청주 날씨(Open-Meteo) · 유가(오피넷 전국 평균, 시세 자료) · 환율(USD/KRW, LME 환산 환율)
+   대표 로그인이면 daily_market()로 전일 대비까지. 낮/밤 모드 ── */
+var MK = { wx: null, wxAt: 0, mk: null, busy: 0 }, MK_CITY = [['이천', 37.272, 127.435], ['청주', 36.642, 127.489]];
+function mkWc(c){ c = +c; if(c === 0) return '맑음'; if(c <= 2) return '구름 조금'; if(c === 3) return '흐림'; if(c === 45 || c === 48) return '안개'; if(c >= 51 && c <= 57) return '이슬비'; if(c >= 61 && c <= 67) return '비'; if(c >= 71 && c <= 77) return '눈'; if(c >= 80 && c <= 82) return '소나기'; if(c === 85 || c === 86) return '눈'; if(c >= 95) return '뇌우'; return '-'; }
+function mkPaint(){
+  MK_CITY.forEach(function(c, i){ var w = MK.wx && MK.wx[i];
+    $('mkW' + i).textContent = w ? mkWc(w.code) + ' ' + Math.round(w.t) + '°' : '…';
+    $('mkW' + i + 's').textContent = w ? Math.round(w.lo) + '° / ' + Math.round(w.hi) + '°' + (w.pp != null ? ' · 비 ' + w.pp + '%' : '') : (MK.wxAt ? '날씨 자료 없음' : '불러오는 중'); });
+  var m = MK.mk || {}, x = m.fx, L = (DATA && DATA.lme) || [], fx = x && x.rate ? +x.rate : (L[0] && L[0].fx ? +L[0].fx : null);
+  $('mkFx').textContent = fx ? fx.toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '-';
+  var ch = '';
+  if(x && x.prev != null && x.rate){ var d = Math.round((x.rate - x.prev) * 10) / 10; ch = d ? '<span class="' + (d > 0 ? 'up' : 'down') + '">전일 ' + (d > 0 ? '+' : '−') + Math.abs(d).toFixed(1) + '</span>' : '전일과 같음'; }
+  else if(L[0] && L[0].upd) ch = 'LME 환산 · ' + esc(kst(L[0].upd));
+  $('mkFxs').innerHTML = ch;
+  var f = m.fuel || {}, dz = f['경유'];
+  if(dz && dz.prev != null){ var c = Math.round(dz.price - dz.prev); if(c) $('fDt').innerHTML = '· 경유 전일 <span class="' + (c > 0 ? 'up' : 'down') + '">' + (c > 0 ? '+' : '−') + Math.abs(c) + '</span>'; }
+}
+function mkWx(){
+  var u = 'https://api.open-meteo.com/v1/forecast?latitude=' + MK_CITY.map(function(c){ return c[1]; }).join(',') + '&longitude=' + MK_CITY.map(function(c){ return c[2]; }).join(',') + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FSeoul&forecast_days=1';
+  return fetch(u).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(j){ if(!Array.isArray(j)) j = [j];
+    return j.map(function(o){ var c = o.current || {}, y = o.daily || {}; return { t: c.temperature_2m, code: c.weather_code, hi: (y.temperature_2m_max || [])[0], lo: (y.temperature_2m_min || [])[0], pp: (y.precipitation_probability_max || [])[0] }; }); });
+}
+function mkOwn(){ if(!OWNER || MK.mk) return; Promise.resolve(sb.rpc('daily_market')).then(function(r){ if(r && !r.error && r.data && r.data.ok){ MK.mk = r.data; mkPaint(); } }).catch(function(){}); }
+function mkLoad(force){
+  if(MK.busy) return; MK.busy = 1; var now = Date.now(), J = [];
+  try { if(!MK.wx){ var c = JSON.parse(localStorage.getItem('gs_wx') || 'null'); if(c && now - c.at < 30 * 60e3){ MK.wx = c.wx; MK.wxAt = c.at; } } } catch(e){}
+  if(force || !MK.wx || now - MK.wxAt > 30 * 60e3) J.push(mkWx().then(function(w){ MK.wx = w; MK.wxAt = Date.now(); try { localStorage.setItem('gs_wx', JSON.stringify({ at: MK.wxAt, wx: w })); } catch(e){} }).catch(function(){ MK.wxAt = MK.wxAt || Date.now(); }));
+  if(OWNER) J.push(Promise.resolve(sb.rpc('daily_market')).then(function(r){ if(r && !r.error && r.data && r.data.ok) MK.mk = r.data; }).catch(function(){}));
+  if(force && DATA) J.push(load());
+  Promise.all(J).then(function(){ MK.busy = 0; mkPaint(); });
+}
+function themeCur(){ var t = null; try { t = localStorage.getItem('gs_theme'); } catch(e){} return t || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+function applyTheme(t){ document.documentElement.setAttribute('data-theme', t); var m = document.querySelector('meta[name="theme-color"]'); if(m) m.content = t === 'dark' ? '#17181c' : '#b71c1c'; $('themeBtn').title = t === 'dark' ? '밤모드 (누르면 낮모드)' : '낮모드 (누르면 밤모드)'; }
+function toggleTheme(){ var n = themeCur() === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('gs_theme', n); } catch(e){} applyTheme(n); }
+try { applyTheme(themeCur()); } catch(e){}
+mkPaint(); mkLoad(false); setInterval(function(){ if(document.visibilityState === 'visible') mkLoad(false); }, 10 * 60e3);
 boot();
 </script>
 </body>
