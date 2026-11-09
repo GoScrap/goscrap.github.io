@@ -1,0 +1,23 @@
+# BVS / PYRO Security Governance
+*.xlsx
+*.xls
+*.csv
+*.tsv
+*.pdf
+*.hwp
+*.sql
+*.db
+*.env*
+*.key
+*.pem
+*.der
+*.p12
+*.zip
+*.tar*
+00_*.md
+*_인계장.md
+*_의논.md
+CLAUDE.md
+GEMINI.md
+.vscode/
+.idea/
