@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>파이로 · PYRO ERP</title>
-<meta name="app-version" content="2.00">
+<meta name="app-version" content="2.01">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -25,7 +25,6 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="./erp-core.js?v=1.06"></script>
 <script src="./erp-grid.js?v=1.01"></script>
-<link rel="stylesheet" href="./erp-ui.css?v=2.00">
 <style>
 :root, html[data-theme="light"] {
   --font-sans: "Geist", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
@@ -1183,6 +1182,12 @@ body.has-sbar { padding-bottom: 28px; }
   .ed-card { width: 100%; max-height: none; border-radius: 0; }
 }
 
+.prt-head { display: none; }
+@media print {
+  .prt-head { display: block; margin: 0 0 6mm; }
+  .prt-head .ph-t { font-size: 15pt; font-weight: 700; text-align: center; letter-spacing: 6px; margin-bottom: 3mm; }
+  .prt-head .ph-row { display: flex; justify-content: space-between; gap: 8mm; font-size: 9pt; border-bottom: 1.5px solid #000; padding-bottom: 1.5mm; }
+}
 #vpBox { display: none; }
 @media print {
   body.vp-on > *:not(#vpBox) { display: none !important; }
@@ -1281,8 +1286,8 @@ body.has-sbar { padding-bottom: 28px; }
     <kbd>Ctrl K</kbd>
   </button>
   <div class="elinks nav-links">
-    <a href="https://daily.bvs.kr/erp.html" class="nav-btn"><i class="co-dot bvs">●</i> BVS</a>
-    <a href="https://daily.bvs.kr/ssjg.html" class="nav-btn"><i class="co-dot ssjg">●</i> 레드캣</a>
+    <a href="#" onclick="goBvs();return false" class="nav-btn"><i class="co-dot bvs">●</i> BVS</a>
+    <a href="#" onclick="goSsjg();return false" class="nav-btn"><i class="co-dot ssjg">●</i> 레드캣</a>
     <a href="#" onclick="pqNav('todo');return false" class="nav-btn active"><i class="co-dot pyro">●</i> PYRO</a>
     <a href="https://daily.bvs.kr/" target="_blank" rel="noopener noreferrer" class="nav-btn hide-mob" title="현장 데일리 (새 탭)">데일리</a>
     <button class="nav-btn" onclick="toggleTheme()" title="라이트/다크 테마 전환">테마</button>
@@ -1296,7 +1301,7 @@ body.has-sbar { padding-bottom: 28px; }
   <nav class="sb-nav" id="sbNav"></nav>
   <div class="sb-foot">
     <div id="userEmail" style="font-weight:500;color:var(--tx2);overflow:hidden;text-overflow:ellipsis"></div>
-    <div style="margin-top:2px">개인사업자 파이로 · v2.00</div>
+    <div style="margin-top:2px">개인사업자 파이로 · v2.01</div>
   </div>
 </aside>
 <div id="sbDim" onclick="closeMobSb()"></div>
@@ -1412,7 +1417,7 @@ body.has-sbar { padding-bottom: 28px; }
       <div class="panel-head">
         <div class="panel-title">금속·스크랩 시세 (<span id="metalCount">0</span>종)</div>
         <div style="display:flex;gap:8px">
-          <a class="btn btn-xs" href="price.html" target="_blank" rel="noopener" title="외부 고물상 열람 화면 · 열람 계정·PIN 관리 (v1.22)">시세 공유</a>
+          <a class="btn btn-xs" href="https://goscrap.github.io/price.html" target="_blank" rel="noopener" title="외부 고물상 열람 화면 · 열람 계정·PIN 관리 (v1.22)">시세 공유</a>
           <input type="text" id="metalSearch" class="input" placeholder="금속명/규격 검색..." onkeyup="filterMetals()" style="width:200px">
           <button class="btn btn-primary" onclick='edOpen("metal")'>+ 추가</button>
         </div>
@@ -2506,8 +2511,8 @@ body.has-sbar { padding-bottom: 28px; }
     <div class="mob-menu-footer">
       <div class="mob-menu-links-title">전사 시스템</div>
       <div class="mob-menu-links">
-        <a href="https://daily.bvs.kr/erp.html" class="mob-menu-lnk"><i class="co-dot bvs">●</i> BVS</a>
-        <a href="https://daily.bvs.kr/ssjg.html" class="mob-menu-lnk"><i class="co-dot ssjg">●</i> 레드캣</a>
+        <a href="#" onclick="goBvs();return false" class="mob-menu-lnk"><i class="co-dot bvs">●</i> BVS</a>
+        <a href="#" onclick="goSsjg();return false" class="mob-menu-lnk"><i class="co-dot ssjg">●</i> 레드캣</a>
         <a href="https://daily.bvs.kr/" target="_blank" rel="noopener noreferrer" class="mob-menu-lnk"><i class="co-dot hbs">●</i> 데일리</a>
         <a href="#" class="mob-menu-lnk" onclick="toggleTheme();return false">테마 전환</a>
       </div>
@@ -8681,6 +8686,14 @@ document.addEventListener("keydown", (function(ev) {
     if (ev.key !== "Enter" || !document.getElementById("app").classList.contains("hide")) return;
     if (!document.getElementById("stepreset").classList.contains("hide")) doReset(); else if (!document.getElementById("steplogin").classList.contains("hide")) doLogin(); else if (!document.getElementById("stepkey").classList.contains("hide")) saveKey();
 }));
+
+function goBvs() {
+    location.href = (location.hostname !== "daily.bvs.kr" && location.hostname !== "goscrap.github.io") ? "/" : "./erp.html";
+}
+
+function goSsjg() {
+    location.href = (location.hostname !== "daily.bvs.kr" && location.hostname !== "goscrap.github.io") ? "/ssjg" : "./ssjg.html";
+}
 
 function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
